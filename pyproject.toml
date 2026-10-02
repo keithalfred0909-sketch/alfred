@@ -1,0 +1,21 @@
+[project]
+name = "abogado"
+version = "0.0.1"
+description = "Asistente jurídico personal basado en IA (España / Cataluña)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/abogado"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,17 @@
+# Entornos y cachés
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+build/
+
+# Secretos
+.env
+*.key
+
+# Datos de casos: nunca al repositorio
+data/
+*.db
+*.sqlite
+*.sqlite3
