@@ -12,7 +12,7 @@ Research/backtest output only. Not investment advice. No live trading.
 | Historical period | 1999-01-04 17:00:00+00:00 to 2026-09-25 16:00:00+00:00 (6955 bars) |
 | Data capabilities | close only |
 | Dataset version | 35fd595cefb7190d |
-| Mode / budget used | standard - 12 experiments, 30 strategies examined, 1.76 min |
+| Mode / budget used | standard - 12 experiments, 30 strategies examined, 1.75 min |
 | Backtests counted as trials (all runs on this dataset) | 7951 |
 
 **Splits** (chronological, embargoed): TRAIN 1999-01-04 to 2014-12-31 (4022 bars); VALIDATION 2015-02-02 to 2018-12-31 (980 bars); TEST 2019-02-01 to 2022-12-30 (978 bars); FINAL 2023-02-01 to 2026-09-25 (915 bars)
@@ -109,7 +109,7 @@ Strongest hypotheses that failed confirmation (OVERFIT):
 
 **Robustness:** parameter neighbours profitable 100.00%; noise-perturbed runs SR>0 100.00%; profitable years 70.00%
 
-**Overfitting risk:** deflated Sharpe probability 0.058 (after 1088 trials); PBO 0.48; IS->OOS Sharpe ratio 1.05
+**Overfitting risk:** deflated Sharpe probability 0.018 (after 7951 trials); PBO 0.48; IS->OOS Sharpe ratio 1.05
 
 **Adversarial attacks**
 
@@ -133,12 +133,12 @@ Strongest hypotheses that failed confirmation (OVERFIT):
 | data_perturbation | overfit | PASS | 1.000 | >= 0.6 of runs SR>0 |
 | timeframe_perturbation | warn | PASS | {"phase0": 0.25004512057947875, "phase1": 0.1114992398380536 | SR>0 both phases |
 | monte_carlo_loss_probability | reject | PASS | 0.030 | <= 0.2 |
-| deflated_sharpe | overfit | FAIL | 0.058 | >= 0.95 |
+| deflated_sharpe | overfit | FAIL | 0.018 | >= 0.95 |
 | probability_backtest_overfitting | overfit | PASS | 0.476 | <= 0.5 |
 
 **Why it is ranked here:** passed 18 of 20 decisive/informative attacks.
 
-**Why it might fail:** few_trades_dependence: Does profit depend on a handful of trades? -> value 0.547402450873823 vs top 5% trades <= 50% of profit; deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.057660153930750475 vs >= 0.95
+**Why it might fail:** few_trades_dependence: Does profit depend on a handful of trades? -> value 0.547402450873823 vs top 5% trades <= 50% of profit; deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.018005528142977734 vs >= 0.95
 
 ### Strategy #2 - STR-000030 - **REJECTED**
 
@@ -223,7 +223,7 @@ Strongest hypotheses that failed confirmation (OVERFIT):
 
 **Robustness:** parameter neighbours profitable 100.00%; noise-perturbed runs SR>0 100.00%; profitable years 65.00%
 
-**Overfitting risk:** deflated Sharpe probability 0.015 (after 7242 trials); PBO 0.92; IS->OOS Sharpe ratio 0.64
+**Overfitting risk:** deflated Sharpe probability 0.014 (after 7951 trials); PBO 0.92; IS->OOS Sharpe ratio 0.64
 
 **Adversarial attacks**
 
@@ -246,12 +246,12 @@ Strongest hypotheses that failed confirmation (OVERFIT):
 | data_perturbation | overfit | PASS | 1.000 | >= 0.6 of runs SR>0 |
 | timeframe_perturbation | warn | FAIL | {"phase0": -0.05695940922677311, "phase1": -0.22843876349171 | SR>0 both phases |
 | monte_carlo_loss_probability | reject | PASS | 0.037 | <= 0.2 |
-| deflated_sharpe | overfit | FAIL | 0.015 | >= 0.95 |
+| deflated_sharpe | overfit | FAIL | 0.014 | >= 0.95 |
 | probability_backtest_overfitting | overfit | FAIL | 0.921 | <= 0.5 |
 
 **Why it is ranked here:** passed 15 of 19 decisive/informative attacks.
 
-**Why it might fail:** few_trades_dependence: Does profit depend on a handful of trades? -> value 0.6781852450110422 vs top 5% trades <= 50% of profit; deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.01535182658938029 vs >= 0.95; probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5
+**Why it might fail:** few_trades_dependence: Does profit depend on a handful of trades? -> value 0.6781852450110422 vs top 5% trades <= 50% of profit; deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.014459381318374907 vs >= 0.95; probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5
 
 ## Why the others failed
 

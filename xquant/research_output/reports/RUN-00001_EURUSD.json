@@ -2810,7 +2810,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.547402450873823 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.057660153930750475 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.018005528142977734 vs >= 0.95"
    ],
    "score": 2.3699869260495214,
    "train": {
@@ -3104,10 +3104,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.057660153930750475
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.018005528142977734
     },
     "pbo": {
      "status": "OK",
@@ -3277,10 +3277,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.057660153930750475,
+     "value": 0.018005528142977734,
      "threshold": ">= 0.95"
     },
     {
@@ -7855,7 +7855,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.6781852450110422 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.01535182658938029 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.014459381318374907 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": 1.8388527371059133,
@@ -8146,10 +8146,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.01535182658938029
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.014459381318374907
     },
     "pbo": {
      "status": "OK",
@@ -8311,10 +8311,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.01535182658938029,
+     "value": 0.014459381318374907,
      "threshold": ">= 0.95"
     },
     {
@@ -12890,7 +12890,7 @@
     "entry_displacement: Does it survive entries displaced by +/-1 bar? -> value [-0.10706745449259757, 0.5210052886184329] vs SR>0 both ways",
     "other_years: Does it work across years, not only in some? -> value 0.4 vs >= 0.5",
     "schedule_dependence: Does it depend on one weekday/hour? -> value 0.6129655605496115 vs <= 60%",
-    "deflated_sharpe: Is the train Sharpe significant after 4259 trials? -> value 0.06448342205552808 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.046715481542971976 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8690476190476191 vs <= 0.5"
    ],
    "score": 1.5908084968910365,
@@ -13185,10 +13185,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 4259,
-     "null_sr_benchmark_annual": 0.9109015451221122,
-     "sr_trials_std_annual": 0.27741324129618883,
-     "dsr": 0.06448342205552808
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.046715481542971976
     },
     "pbo": {
      "status": "OK",
@@ -13358,10 +13358,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 4259 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.06448342205552808,
+     "value": 0.046715481542971976,
      "threshold": ">= 0.95"
     },
     {
@@ -15412,7 +15412,7 @@
    "status": "REJECTED",
    "reasons": [
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
-    "deflated_sharpe: Is the train Sharpe significant after 2780 trials? -> value 0.4542895246108375 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.3442716249061296 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8095238095238095 vs <= 0.5"
    ],
    "score": 1.5704012716058342,
@@ -15703,10 +15703,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 2780,
-     "null_sr_benchmark_annual": 0.883105712499744,
-     "sr_trials_std_annual": 0.28754851984381324,
-     "dsr": 0.4542895246108375
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.3442716249061296
     },
     "pbo": {
      "status": "OK",
@@ -15868,10 +15868,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 2780 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.4542895246108375,
+     "value": 0.3442716249061296,
      "threshold": ">= 0.95"
     },
     {
@@ -17922,7 +17922,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.5939029215578534 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.41124633498282726 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.22374375783875572 vs >= 0.95"
    ],
    "score": 1.5558812365228847,
    "train": {
@@ -18216,10 +18216,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.41124633498282726
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.22374375783875572
     },
     "pbo": {
      "status": "OK",
@@ -18389,10 +18389,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.41124633498282726,
+     "value": 0.22374375783875572,
      "threshold": ">= 0.95"
     },
     {
@@ -20443,7 +20443,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.5134514879372277 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.35887276158795667 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.1854691426903402 vs >= 0.95"
    ],
    "score": 1.2954283484520044,
    "train": {
@@ -20737,10 +20737,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.35887276158795667
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.1854691426903402
     },
     "pbo": {
      "status": "OK",
@@ -20910,10 +20910,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.35887276158795667,
+     "value": 0.1854691426903402,
      "threshold": ">= 0.95"
     },
     {
@@ -22965,7 +22965,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.037899634587883355, 'pf': 0.9593585059866717, 'trades': 29} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.6341333964301488 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.36890322744924264 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.192394883728295 vs >= 0.95"
    ],
    "score": 1.0402531926134901,
    "train": {
@@ -23259,10 +23259,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.36890322744924264
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.192394883728295
     },
     "pbo": {
      "status": "OK",
@@ -23432,10 +23432,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.36890322744924264,
+     "value": 0.192394883728295,
      "threshold": ">= 0.95"
     },
     {
@@ -25487,7 +25487,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.038362759487702486, 'pf': 0.9702549808053877, 'trades': 38} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.8927724067177955 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 4259 trials? -> value 0.03244563335088608 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.022636991679060903 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8690476190476191 vs <= 0.5"
    ],
    "score": 0.9972871633134496,
@@ -25782,10 +25782,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 4259,
-     "null_sr_benchmark_annual": 0.9109015451221122,
-     "sr_trials_std_annual": 0.27741324129618883,
-     "dsr": 0.03244563335088608
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.022636991679060903
     },
     "pbo": {
      "status": "OK",
@@ -25955,10 +25955,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 4259 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.03244563335088608,
+     "value": 0.022636991679060903,
      "threshold": ">= 0.95"
     },
     {
@@ -28011,7 +28011,7 @@
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.0162314387209713, 'pf': 0.9893547619203179, 'trades': 52} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.8937033673719568 vs top 5% trades <= 50% of profit",
     "schedule_dependence: Does it depend on one weekday/hour? -> value 0.6447958887265356 vs <= 60%",
-    "deflated_sharpe: Is the train Sharpe significant after 4259 trials? -> value 0.06510754723923186 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.04756009707317293 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8690476190476191 vs <= 0.5"
    ],
    "score": 0.9202841249125582,
@@ -28306,10 +28306,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 4259,
-     "null_sr_benchmark_annual": 0.9109015451221122,
-     "sr_trials_std_annual": 0.27741324129618883,
-     "dsr": 0.06510754723923186
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.04756009707317293
     },
     "pbo": {
      "status": "OK",
@@ -28479,10 +28479,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 4259 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.06510754723923186,
+     "value": 0.04756009707317293,
      "threshold": ">= 0.95"
     },
     {
@@ -30534,7 +30534,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.046505410462846355, 'pf': 0.9699537460697781, 'trades': 45} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 1.203422381175557 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 4259 trials? -> value 0.021501329717432984 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.014627710774556869 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8690476190476191 vs <= 0.5"
    ],
    "score": 0.808647942762826,
@@ -30829,10 +30829,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 4259,
-     "null_sr_benchmark_annual": 0.9109015451221122,
-     "sr_trials_std_annual": 0.27741324129618883,
-     "dsr": 0.021501329717432984
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.014627710774556869
     },
     "pbo": {
      "status": "OK",
@@ -31002,10 +31002,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 4259 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.021501329717432984,
+     "value": 0.014627710774556869,
      "threshold": ">= 0.95"
     },
     {
@@ -33062,7 +33062,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.02722119022446669, 'pf': 0.9710321784425748, 'trades': 19} vs SR>0, PF>1, >=5 trades",
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
-    "deflated_sharpe: Is the train Sharpe significant after 2780 trials? -> value 0.3833339862546786 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.2786555677796343 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8095238095238095 vs <= 0.5"
    ],
    "score": 0.7928235554225799,
@@ -33353,10 +33353,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 2780,
-     "null_sr_benchmark_annual": 0.883105712499744,
-     "sr_trials_std_annual": 0.28754851984381324,
-     "dsr": 0.3833339862546786
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.2786555677796343
     },
     "pbo": {
      "status": "OK",
@@ -33518,10 +33518,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 2780 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.3833339862546786,
+     "value": 0.2786555677796343,
      "threshold": ">= 0.95"
     },
     {
@@ -38096,7 +38096,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.0793591625664321, 'pf': 0.8820177966211479, 'trades': 9} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.5704619463813282 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 4259 trials? -> value 0.02474774218528135 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.016820926620874675 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8690476190476191 vs <= 0.5"
    ],
    "score": 0.7191940042959533,
@@ -38391,10 +38391,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 4259,
-     "null_sr_benchmark_annual": 0.9109015451221122,
-     "sr_trials_std_annual": 0.27741324129618883,
-     "dsr": 0.02474774218528135
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.016820926620874675
     },
     "pbo": {
      "status": "OK",
@@ -38564,10 +38564,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 4259 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.02474774218528135,
+     "value": 0.016820926620874675,
      "threshold": ">= 0.95"
     },
     {
@@ -43148,7 +43148,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.14444035045110729, 'pf': 0.7990875504903495, 'trades': 13} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.5286644917769823 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 2780 trials? -> value 0.29502171705345304 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.20551353061373379 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8095238095238095 vs <= 0.5"
    ],
    "score": 0.44068236333903055,
@@ -43439,10 +43439,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 2780,
-     "null_sr_benchmark_annual": 0.883105712499744,
-     "sr_trials_std_annual": 0.28754851984381324,
-     "dsr": 0.29502171705345304
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.20551353061373379
     },
     "pbo": {
      "status": "OK",
@@ -43604,10 +43604,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 2780 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.29502171705345304,
+     "value": 0.20551353061373379,
      "threshold": ">= 0.95"
     },
     {
@@ -45663,7 +45663,7 @@
     "other_years: Does it work across years, not only in some? -> value 0.4 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.7687344471998993 vs top 5% trades <= 50% of profit",
     "schedule_dependence: Does it depend on one weekday/hour? -> value 0.7158514214616101 vs <= 60%",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.0856496803756926 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.029297088381323697 vs >= 0.95"
    ],
    "score": 0.3295546534004372,
    "train": {
@@ -45957,10 +45957,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.0856496803756926
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.029297088381323697
     },
     "pbo": {
      "status": "OK",
@@ -46130,10 +46130,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.0856496803756926,
+     "value": 0.029297088381323697,
      "threshold": ">= 0.95"
     },
     {
@@ -48186,7 +48186,7 @@
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.17724803753280594, 'pf': 0.653385803272799, 'trades': 13} vs SR>0, PF>1, >=5 trades",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 1.0305184964222245 vs top 5% trades <= 50% of profit",
     "schedule_dependence: Does it depend on one weekday/hour? -> value 0.6822156115212712 vs <= 60%",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.016336807570760663 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.01540519886022472 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": 0.2708490146760189,
@@ -48477,10 +48477,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.016336807570760663
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.01540519886022472
     },
     "pbo": {
      "status": "OK",
@@ -48642,10 +48642,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.016336807570760663,
+     "value": 0.01540519886022472,
      "threshold": ">= 0.95"
     },
     {
@@ -50703,7 +50703,7 @@
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.4200928136845936, 'pf': 0.49280125688704135, 'trades': 8} vs SR>0, PF>1, >=5 trades",
     "walk_forward: Does it survive rolling walk-forward re-fitting? -> value {'oos_sharpe': 0.22855433739303144, 'positive_windows': 0.3333333333333333} vs OOS SR>0 and >=50% windows positive",
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
-    "deflated_sharpe: Is the train Sharpe significant after 6523 trials? -> value 0.25452062119616 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.23933105386219983 vs >= 0.95"
    ],
    "score": -0.0018441969423412252,
    "train": {
@@ -50996,10 +50996,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 6523,
-     "null_sr_benchmark_annual": 0.9379442459181998,
-     "sr_trials_std_annual": 0.2859869748834363,
-     "dsr": 0.25452062119616
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.23933105386219983
     },
     "pbo": {
      "status": "OK",
@@ -51169,10 +51169,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 6523 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.25452062119616,
+     "value": 0.23933105386219983,
      "threshold": ">= 0.95"
     },
     {
@@ -53225,7 +53225,7 @@
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.4148681381863016, 'pf': 0.6037770696306497, 'trades': 21} vs SR>0, PF>1, >=5 trades",
     "walk_forward: Does it survive rolling walk-forward re-fitting? -> value {'oos_sharpe': -0.09215869932890254, 'positive_windows': 0.16666666666666666} vs OOS SR>0 and >=50% windows positive",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.760503665343624 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 6523 trials? -> value 0.052211168619462074 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.04718222987222364 vs >= 0.95"
    ],
    "score": -0.03440565749150362,
    "train": {
@@ -53519,10 +53519,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 6523,
-     "null_sr_benchmark_annual": 0.9379442459181998,
-     "sr_trials_std_annual": 0.2859869748834363,
-     "dsr": 0.052211168619462074
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.04718222987222364
     },
     "pbo": {
      "status": "OK",
@@ -53692,10 +53692,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 6523 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.052211168619462074,
+     "value": 0.04718222987222364,
      "threshold": ">= 0.95"
     },
     {
@@ -58276,7 +58276,7 @@
     "beats_random_entries: Does its timing beat random entries with the same exits and costs? -> value 0.07784431137724551 vs p < 0.05",
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.5726380791522953 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 2780 trials? -> value 0.333564374031732 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.236727974849828 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8095238095238095 vs <= 0.5"
    ],
    "score": -0.2747977376478486,
@@ -58567,10 +58567,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 2780,
-     "null_sr_benchmark_annual": 0.883105712499744,
-     "sr_trials_std_annual": 0.28754851984381324,
-     "dsr": 0.333564374031732
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.236727974849828
     },
     "pbo": {
      "status": "OK",
@@ -58732,10 +58732,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 2780 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.333564374031732,
+     "value": 0.236727974849828,
      "threshold": ">= 0.95"
     },
     {
@@ -60789,7 +60789,7 @@
     "beats_random_entries: Does its timing beat random entries with the same exits and costs? -> value 0.0658682634730539 vs p < 0.05",
     "other_years: Does it work across years, not only in some? -> value 0.4 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.536585212970177 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 2780 trials? -> value 0.3329862757761447 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.23670662202962445 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.8095238095238095 vs <= 0.5"
    ],
    "score": -0.5255466727508422,
@@ -61080,10 +61080,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 2780,
-     "null_sr_benchmark_annual": 0.883105712499744,
-     "sr_trials_std_annual": 0.28754851984381324,
-     "dsr": 0.3329862757761447
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.23670662202962445
     },
     "pbo": {
      "status": "OK",
@@ -61245,10 +61245,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 2780 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.3329862757761447,
+     "value": 0.23670662202962445,
      "threshold": ">= 0.95"
     },
     {
@@ -63305,7 +63305,7 @@
    "reasons": [
     "out_of_sample_validation: Does it work out of sample (VALIDATION, thresholds from TRAIN)? -> value {'sharpe': -0.9568034212167876, 'pf': 0.31786565475765827, 'trades': 11} vs SR>0, PF>1, >=5 trades",
     "walk_forward: Does it survive rolling walk-forward re-fitting? -> value {'oos_sharpe': 0.007185372290639703, 'positive_windows': 0.3333333333333333} vs OOS SR>0 and >=50% windows positive",
-    "deflated_sharpe: Is the train Sharpe significant after 6523 trials? -> value 0.4807742902034121 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.46128610120291175 vs >= 0.95"
    ],
    "score": -0.713625820223544,
    "train": {
@@ -63599,10 +63599,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 6523,
-     "null_sr_benchmark_annual": 0.9379442459181998,
-     "sr_trials_std_annual": 0.2859869748834363,
-     "dsr": 0.4807742902034121
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.46128610120291175
     },
     "pbo": {
      "status": "OK",
@@ -63772,10 +63772,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 6523 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.4807742902034121,
+     "value": 0.46128610120291175,
      "threshold": ">= 0.95"
     },
     {
@@ -65834,7 +65834,7 @@
     "walk_forward: Does it survive rolling walk-forward re-fitting? -> value {'oos_sharpe': -0.015291086383267292, 'positive_windows': 0.16666666666666666} vs OOS SR>0 and >=50% windows positive",
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
     "schedule_dependence: Does it depend on one weekday/hour? -> value 0.6093497172655162 vs <= 60%",
-    "deflated_sharpe: Is the train Sharpe significant after 6523 trials? -> value 0.3291683751352912 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.3116094825234059 vs >= 0.95"
    ],
    "score": -0.9915307162271643,
    "train": {
@@ -66128,10 +66128,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 6523,
-     "null_sr_benchmark_annual": 0.9379442459181998,
-     "sr_trials_std_annual": 0.2859869748834363,
-     "dsr": 0.3291683751352912
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.3116094825234059
     },
     "pbo": {
      "status": "OK",
@@ -66301,10 +66301,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 6523 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.3291683751352912,
+     "value": 0.3116094825234059,
      "threshold": ">= 0.95"
     },
     {
@@ -68360,7 +68360,7 @@
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 6.298344262924445 vs top 5% trades <= 50% of profit",
     "single_event_dependence: Is it still profitable without its best month? -> value -0.02221295736870864 vs > 0",
     "monte_carlo_loss_probability: Under trade-order bootstrap, is a loss unlikely? -> value 0.415 vs <= 0.2",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.0017955216707995763 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.0016662113181866375 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": -0.9948108945604475,
@@ -68655,10 +68655,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.0017955216707995763
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.0016662113181866375
     },
     "pbo": {
      "status": "OK",
@@ -68828,10 +68828,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.0017955216707995763,
+     "value": 0.0016662113181866375,
      "threshold": ">= 0.95"
     },
     {
@@ -70892,7 +70892,7 @@
     "other_years: Does it work across years, not only in some? -> value 0.3 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 1.4998282087896624 vs top 5% trades <= 50% of profit",
     "monte_carlo_loss_probability: Under trade-order bootstrap, is a loss unlikely? -> value 0.273 vs <= 0.2",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.012835885398940327 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.012072571602399195 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": -1.0620141303904724,
@@ -71186,10 +71186,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.012835885398940327
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.012072571602399195
     },
     "pbo": {
      "status": "OK",
@@ -71359,10 +71359,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.012835885398940327,
+     "value": 0.012072571602399195,
      "threshold": ">= 0.95"
     },
     {
@@ -73423,7 +73423,7 @@
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.9027546372376203 vs top 5% trades <= 50% of profit",
     "other_regimes: Does it work in more than one market regime? -> value 1.0 vs <= 85% from one regime",
-    "deflated_sharpe: Is the train Sharpe significant after 6523 trials? -> value 0.03380537070974349 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.03038077165916349 vs >= 0.95"
    ],
    "score": -1.0917708964396766,
    "train": {
@@ -73717,10 +73717,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 6523,
-     "null_sr_benchmark_annual": 0.9379442459181998,
-     "sr_trials_std_annual": 0.2859869748834363,
-     "dsr": 0.03380537070974349
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.03038077165916349
     },
     "pbo": {
      "status": "OK",
@@ -73890,10 +73890,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 6523 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.03380537070974349,
+     "value": 0.03038077165916349,
      "threshold": ">= 0.95"
     },
     {
@@ -75948,7 +75948,7 @@
     "walk_forward: Does it survive rolling walk-forward re-fitting? -> value {'oos_sharpe': -0.08554312139019837, 'positive_windows': 0.3333333333333333} vs OOS SR>0 and >=50% windows positive",
     "other_years: Does it work across years, not only in some? -> value 0.45 vs >= 0.5",
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 1.2719782608191652 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.029735502894480004 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.028170075922613426 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": -1.207409717079603,
@@ -76243,10 +76243,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.029735502894480004
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.028170075922613426
     },
     "pbo": {
      "status": "OK",
@@ -76416,10 +76416,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.029735502894480004,
+     "value": 0.028170075922613426,
      "threshold": ">= 0.95"
     },
     {
@@ -78472,7 +78472,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.547402450873823 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 1088 trials? -> value 0.057660153930750475 vs >= 0.95"
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.018005528142977734 vs >= 0.95"
    ],
    "score": 2.3699869260495214,
    "train": {
@@ -78766,10 +78766,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 1088,
-     "null_sr_benchmark_annual": 0.819076551120902,
-     "sr_trials_std_annual": 0.2577049713426036,
-     "dsr": 0.057660153930750475
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.018005528142977734
     },
     "pbo": {
      "status": "OK",
@@ -78939,10 +78939,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 1088 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.057660153930750475,
+     "value": 0.018005528142977734,
      "threshold": ">= 0.95"
     },
     {
@@ -83517,7 +83517,7 @@
    "status": "REJECTED",
    "reasons": [
     "few_trades_dependence: Does profit depend on a handful of trades? -> value 0.6781852450110422 vs top 5% trades <= 50% of profit",
-    "deflated_sharpe: Is the train Sharpe significant after 7242 trials? -> value 0.01535182658938029 vs >= 0.95",
+    "deflated_sharpe: Is the train Sharpe significant after 7951 trials? -> value 0.014459381318374907 vs >= 0.95",
     "probability_backtest_overfitting: Is the search process itself overfitting (CSCV PBO)? -> value 0.9206349206349206 vs <= 0.5"
    ],
    "score": 1.8388527371059133,
@@ -83808,10 +83808,10 @@
    },
    "overfit": {
     "deflated_sharpe": {
-     "n_trials": 7242,
-     "null_sr_benchmark_annual": 0.9444714355430591,
-     "sr_trials_std_annual": 0.2830209890076677,
-     "dsr": 0.01535182658938029
+     "n_trials": 7951,
+     "null_sr_benchmark_annual": 0.9502678164429299,
+     "sr_trials_std_annual": 0.27974813824347006,
+     "dsr": 0.014459381318374907
     },
     "pbo": {
      "status": "OK",
@@ -83973,10 +83973,10 @@
     },
     {
      "name": "deflated_sharpe",
-     "question": "Is the train Sharpe significant after 7242 trials?",
+     "question": "Is the train Sharpe significant after 7951 trials?",
      "kind": "overfit",
      "passed": false,
-     "value": 0.01535182658938029,
+     "value": 0.014459381318374907,
      "threshold": ">= 0.95"
     },
     {
@@ -86092,7 +86092,7 @@
   "max_line_failures": 3,
   "experiments_used": 12,
   "strategies_examined": 30,
-  "minutes_used": 1.76,
+  "minutes_used": 1.75,
   "mode": "standard"
  },
  "trials": {
@@ -86104,181 +86104,181 @@
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:0b2ed748067a420e",
-   "at": "2026-10-03T23:34:46+00:00"
+   "at": "2026-10-03T23:38:08+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:c193d57ab5eb392a",
-   "at": "2026-10-03T23:34:48+00:00"
+   "at": "2026-10-03T23:38:11+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:eed49d1cbe443974",
-   "at": "2026-10-03T23:34:51+00:00"
+   "at": "2026-10-03T23:38:13+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:dc5262bfc33fc65e",
-   "at": "2026-10-03T23:34:54+00:00"
+   "at": "2026-10-03T23:38:16+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:acc2a8f0d4474c94",
-   "at": "2026-10-03T23:34:56+00:00"
+   "at": "2026-10-03T23:38:18+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:06606ecb0d48bda2",
-   "at": "2026-10-03T23:35:04+00:00"
+   "at": "2026-10-03T23:38:27+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:07521fe68711ce28",
-   "at": "2026-10-03T23:35:06+00:00"
+   "at": "2026-10-03T23:38:29+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:ea8df81df4d43dbc",
-   "at": "2026-10-03T23:35:08+00:00"
+   "at": "2026-10-03T23:38:31+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:a005ac6733bd383a",
-   "at": "2026-10-03T23:35:10+00:00"
+   "at": "2026-10-03T23:38:33+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:bd23b0d5dbf5dc6d",
-   "at": "2026-10-03T23:35:12+00:00"
+   "at": "2026-10-03T23:38:34+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:416c04c62fa8504a",
-   "at": "2026-10-03T23:35:20+00:00"
+   "at": "2026-10-03T23:38:42+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:d6ca5d0afa4046b3",
-   "at": "2026-10-03T23:35:22+00:00"
+   "at": "2026-10-03T23:38:44+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:e54d14bd65eaeceb",
-   "at": "2026-10-03T23:35:24+00:00"
+   "at": "2026-10-03T23:38:46+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:bdff1b89d898e08c",
-   "at": "2026-10-03T23:35:27+00:00"
+   "at": "2026-10-03T23:38:49+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:6982f102402837b0",
-   "at": "2026-10-03T23:35:30+00:00"
+   "at": "2026-10-03T23:38:52+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:7386f40c585d434a",
-   "at": "2026-10-03T23:35:42+00:00"
+   "at": "2026-10-03T23:39:04+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:1a1a54c73f9b3544",
-   "at": "2026-10-03T23:35:44+00:00"
+   "at": "2026-10-03T23:39:06+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:dcee87be71a5113b",
-   "at": "2026-10-03T23:35:46+00:00"
+   "at": "2026-10-03T23:39:08+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:a31ef276db04a6d0",
-   "at": "2026-10-03T23:35:47+00:00"
+   "at": "2026-10-03T23:39:10+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:6201a7b84cfc17d4",
-   "at": "2026-10-03T23:35:49+00:00"
+   "at": "2026-10-03T23:39:12+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:ed0e553fdec1362f",
-   "at": "2026-10-03T23:35:54+00:00"
+   "at": "2026-10-03T23:39:17+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:8742e5f89594c0f8",
-   "at": "2026-10-03T23:35:57+00:00"
+   "at": "2026-10-03T23:39:20+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:89ec2765ac63156c",
-   "at": "2026-10-03T23:35:59+00:00"
+   "at": "2026-10-03T23:39:21+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:2b6445f99b94c254",
-   "at": "2026-10-03T23:36:01+00:00"
+   "at": "2026-10-03T23:39:24+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:d6a69dc1d13503e8",
-   "at": "2026-10-03T23:36:04+00:00"
+   "at": "2026-10-03T23:39:26+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:4d3f2e6439f490a6",
-   "at": "2026-10-03T23:36:09+00:00"
+   "at": "2026-10-03T23:39:31+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:742f97ecec742c41",
-   "at": "2026-10-03T23:36:11+00:00"
+   "at": "2026-10-03T23:39:33+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:d068accb2db38245",
-   "at": "2026-10-03T23:36:13+00:00"
+   "at": "2026-10-03T23:39:35+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:ca8c9e1a9664da0a",
-   "at": "2026-10-03T23:36:15+00:00"
+   "at": "2026-10-03T23:39:37+00:00"
   },
   {
    "split": "validation",
    "purpose": "evaluate",
    "who": "adversarial:994950fc409baf2a",
-   "at": "2026-10-03T23:36:17+00:00"
+   "at": "2026-10-03T23:39:39+00:00"
   }
  ],
  "limitations": [
@@ -86287,5 +86287,5 @@
   "No news source: news intelligence could not run.",
   "Macro series are latest-vintage values with conservative publication lags (possible mild revision look-ahead for revised series)."
  ],
- "elapsed_s": 105.89903426170349
+ "elapsed_s": 105.22353672981262
 }
