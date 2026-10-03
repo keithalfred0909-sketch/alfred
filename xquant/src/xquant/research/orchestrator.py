@@ -42,7 +42,7 @@ from xquant.news.engine import NewsEngine
 from xquant.probability.engine import ScenarioReport, scenario_analysis
 from xquant.strategy.evaluator import EvalContext
 from xquant.strategy.genome import Genome, genome_from_hypothesis
-from xquant.validation.overfit import pbo_cscv
+from xquant.validation.overfit import deflated_sharpe_report, pbo_cscv
 from xquant.validation.splits import DataSplits, SplitGuard, make_splits
 
 log = get_logger("research")
@@ -440,6 +440,7 @@ class ResearchOrchestrator:
         return pbo_cscv(mat)
 
     def _final_stage(self, ctx: EvalContext, splits: DataSplits, dossiers: list[Dossier], out: ResearchOutcome) -> None:
+        self._refresh_deflated_sharpe(ctx, splits, dossiers)
         finalists = sorted([d for d in dossiers if d.status == "PASSED_SELECTION"], key=lambda d: -d.score)
         pre_test = slice(0, splits.bounds["validation"][1])
         test = splits.slice("test")
@@ -480,6 +481,25 @@ class ResearchOrchestrator:
         out.failure_summary = dict(sorted(fails.items(), key=lambda kv: -kv[1]))
         out.split_access = list(self.guard.log)
         self.memory.record_split_access(self.run_id, self.guard.log)
+
+    def _refresh_deflated_sharpe(self, ctx: EvalContext, splits: DataSplits, dossiers: list[Dossier]) -> None:
+        """Re-deflate every candidate with the trial count at the END of the search, so candidates examined
+        early do not enjoy a smaller multiple-testing penalty. Can only make verdicts stricter."""
+        n_trials, var = self.memory.trials(self.asset, self.dv)
+        train = splits.slice("train")
+        for d in dossiers:
+            rets = ctx.backtest(d.genome, train, train, count=False).returns.to_numpy()
+            ds_ = deflated_sharpe_report(rets, n_trials, var, ctx.market.ppy)
+            d.overfit["deflated_sharpe"] = ds_
+            for a in d.attacks:
+                if a.name == "deflated_sharpe":
+                    a.value, a.question = ds_["dsr"], f"Is the train Sharpe significant after {n_trials} trials?"
+                    a.passed = bool(ds_["dsr"] >= self.cfg.robustness.min_deflated_sharpe_prob)
+            before = d.status
+            AdversarialEngine._verdict(d)
+            if d.status != before:
+                self._say(f"{d.strategy_id}: {before} -> {d.status} after re-deflating with {n_trials} trials")
+            self._store(d)
 
     def _store(self, d: Dossier) -> None:
         payload = d.to_dict()
