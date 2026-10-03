@@ -1,0 +1,8 @@
+# Re-include paths that the parent repo's .gitignore excludes by name
+!src/xquant/data/
+!src/xquant/data/**
+# Download cache (re-creatable; snapshots used for research live in datasets/)
+cache/
+# Scratch research runs; the canonical research output is committed under research_output/
+runs/
+!research_output/*.db

@@ -1,0 +1,8 @@
+{
+  "url": "https://raw.githubusercontent.com/datasets/oil-prices/main/data/brent-daily.csv",
+  "raw_sha256": "e67a00928d8eacc5987dbe2d3dc1e7546226417ce05e14d6cdd917bb79002e1b",
+  "rows": 9097,
+  "downloaded_at": "2026-10-03T23:04:00+00:00",
+  "filter": null,
+  "snapshot_sha256": "8f8b5e9efa42274e57240a2a49c07b9959380eae3e404e71554e0fe32a58a858"
+}

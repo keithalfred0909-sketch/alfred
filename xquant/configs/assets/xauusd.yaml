@@ -1,0 +1,12 @@
+# Template: XAU/USD intraday via Dukascopy (requires datafeed.dukascopy.com in the network allow-list).
+asset:
+  symbol: XAUUSD
+  name: XAU/USD
+  market: metals
+  timeframe: 1h
+  timezone: UTC
+  price_source:
+    kind: dukascopy
+    params: {instrument: XAUUSD, start: "2015-01-01", end: "2025-12-31", point: 0.001}
+  costs: {spread_bps: 2.5, commission_bps: 0.5, slippage_bps: 1.0, latency_bars: 0}
+  splits: {train_end: 2020-12-31, validation_end: 2022-06-30, test_end: 2023-12-31, embargo_bars: 48}
