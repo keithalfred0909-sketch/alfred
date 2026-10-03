@@ -76,3 +76,18 @@ def test_positive_control_injected_edge_is_found_and_survives(tmp_path):
     assert robust, [(d["status"], d["reasons"][:2]) for d in out.dossiers]
     assert out.verdict.startswith("EDGE FOUND"), out.verdict_detail
     assert robust[0]["genome"]["direction"] == 1
+
+
+def test_unexpected_failure_marks_run_failed(tmp_path, monkeypatch):
+    ds = synthetic_dataset(np.random.default_rng(1).normal(0, 0.006, 3000))
+    cfg = _cfg(ds, tmp_path)
+    mem = ResearchMemory(cfg.research.memory_path)
+
+    def boom(*a, **k):
+        raise RuntimeError("simulated crash")
+
+    monkeypatch.setattr("xquant.research.orchestrator.FeatureDiscovery.run", boom)
+    with pytest.raises(RuntimeError):
+        ResearchOrchestrator(cfg, memory=mem, dataset=ds).run()
+    run = mem.query("SELECT status, summary FROM research_runs")[0]
+    assert run["status"] == "FAILED" and "simulated crash" in run["summary"]

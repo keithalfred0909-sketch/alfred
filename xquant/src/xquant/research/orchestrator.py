@@ -143,6 +143,18 @@ class ResearchOrchestrator:
 
     # ---- main ------------------------------------------------------------------------------------
     def run(self) -> ResearchOutcome:
+        """Run a full cycle. Unexpected failures mark the run FAILED in memory (with the error) and re-raise."""
+        try:
+            return self._run()
+        except Exception as exc:
+            if self.run_id:
+                self.memory.update_run(self.run_id, status="FAILED", verdict="FAILED",
+                                       finished_at=pd.Timestamp.now(tz="UTC").isoformat(),
+                                       summary={"detail": f"{type(exc).__name__}: {exc}"})
+                self.memory.log(self.run_id, f"run failed: {type(exc).__name__}: {exc}", "ERROR")
+            raise
+
+    def _run(self) -> ResearchOutcome:
         cfg = self.cfg
         out = ResearchOutcome(run_id="", asset=self.asset, verdict="", verdict_detail="")
         # 1. DATA
