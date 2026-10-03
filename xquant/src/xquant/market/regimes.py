@@ -85,7 +85,12 @@ def fit_regimes(close: pd.Series, train: slice, k_range: range = range(2, 6), se
     model = RegimeModel(k=best, labels=_label(cent), centroids=cent, bic=bics, mean_=mean, std_=std, model=gm)
     reg = model.predict(close).iloc[train].dropna().astype(int)
     trans = pd.crosstab(reg.shift(1).dropna().astype(int), reg.iloc[1:].values, normalize="index")
-    model.stats = {"persistence": {int(i): float(trans.loc[i, i]) if i in trans.index and i in trans.columns else 0.0
-                                   for i in range(best)},
+    persist: dict[int, float] = {}
+    for i in range(best):
+        try:
+            persist[i] = float(trans.at[i, i])  # type: ignore[arg-type]
+        except KeyError:
+            persist[i] = 0.0
+    model.stats = {"persistence": persist,
                    "occupancy": {int(i): float((reg == i).mean()) for i in range(best)}}
     return model

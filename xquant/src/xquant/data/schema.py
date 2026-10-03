@@ -59,7 +59,8 @@ def empty_bars() -> pd.DataFrame:
 def frame_sha256(df: pd.DataFrame) -> str:
     """Content hash of a frame (index + values). Used to version datasets in the experiment tracker."""
     h = hashlib.sha256()
-    h.update(np.asarray(df.index.asi8 if isinstance(df.index, pd.DatetimeIndex) else df.index).tobytes())
+    idx = df.index
+    h.update(np.asarray(idx.asi8 if isinstance(idx, pd.DatetimeIndex) else idx).tobytes())  # type: ignore[attr-defined]
     for col in sorted(df.columns):
         h.update(col.encode())
         h.update(np.ascontiguousarray(df[col].to_numpy(dtype="float64", na_value=np.nan)).tobytes())

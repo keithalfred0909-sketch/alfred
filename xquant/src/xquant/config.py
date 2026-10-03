@@ -57,7 +57,7 @@ class SplitSpec(BaseModel):
     @model_validator(mode="after")
     def _ordered(self) -> SplitSpec:
         if not (self.train_end < self.validation_end < self.test_end):
-            raise ConfigError("splits must satisfy train_end < validation_end < test_end")
+            raise ValueError("splits must satisfy train_end < validation_end < test_end")
         return self
 
 

@@ -66,7 +66,7 @@ def clean_bars(raw: pd.DataFrame, tz: str, timeframe: str, close_time: str | Non
 
     idx = localize_index(pd.DatetimeIndex(df.index), tz, close_time)
     df.index = idx
-    bad_ts = df.index.isna()
+    bad_ts = np.asarray(df.index.isna())
     rep.unparseable_timestamps = int(bad_ts.sum())
     df = df[~bad_ts].sort_index(kind="stable")
 
@@ -121,7 +121,7 @@ def _remove_spikes(df: pd.DataFrame, rep: QualityReport, k: float) -> tuple[pd.D
     nxt = r.shift(-1)
     prev_close = df["close"].shift(1)
     after = df["close"].shift(-1)
-    back = (np.log(after / prev_close)).abs() < sigma
+    back = pd.Series(np.log(after / prev_close), index=df.index).abs() < sigma
     spike = big & (np.sign(nxt) == -np.sign(r)) & (nxt.abs() > 0.8 * r.abs()) & back
     if spike.any():
         rep.spikes_removed = int(spike.sum())

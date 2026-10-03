@@ -26,7 +26,7 @@ def test_asset_configs_load_and_switch_without_core_changes():
 
 
 def test_split_spec_must_be_ordered():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):  # pydantic ValidationError wraps the ConfigError
         SplitSpec(train_end="2020-01-01", validation_end="2019-01-01", test_end="2021-01-01")
 
 

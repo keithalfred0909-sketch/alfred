@@ -120,7 +120,7 @@ class HttpCsvSource(DataSource):
             self.anchor.get("tolerance", 0.002))
         if d not in df.index or pd.isna(df.loc[d, "value"]):
             raise DataQualityError(f"orientation anchor date {d.date()} missing in {self.url}")
-        v = float(df.loc[d, "value"])
+        v = float(df.loc[d, "value"])  # type: ignore[arg-type]
         if abs(v - ref) <= tol:
             self.provenance["orientation"] = "as published"
             return df

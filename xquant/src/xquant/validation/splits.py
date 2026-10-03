@@ -13,6 +13,7 @@ The guard is persisted in the research memory so the rule survives across runs.
 
 from __future__ import annotations
 
+import builtins
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -30,9 +31,9 @@ class DataSplits:
     index: pd.DatetimeIndex
     bounds: dict[str, tuple[int, int]]  # name -> [start, end) positional
 
-    def slice(self, name: SplitName) -> slice:
+    def slice(self, name: SplitName) -> builtins.slice:
         a, b = self.bounds[name]
-        return slice(a, b)
+        return builtins.slice(a, b)
 
     def mask(self, name: SplitName) -> pd.Series:
         m = pd.Series(False, index=self.index)
@@ -49,9 +50,9 @@ class DataSplits:
     def sizes(self) -> dict[str, int]:
         return {k: b - a for k, (a, b) in self.bounds.items()}
 
-    def upto(self, name: SplitName) -> slice:
+    def upto(self, name: SplitName) -> builtins.slice:
         """Positions from the start of data to the end of ``name`` (used for walk-forward re-fits)."""
-        return slice(0, self.bounds[name][1])
+        return builtins.slice(0, self.bounds[name][1])
 
 
 def make_splits(index: pd.DatetimeIndex, spec: SplitSpec, min_size: int = 100) -> DataSplits:

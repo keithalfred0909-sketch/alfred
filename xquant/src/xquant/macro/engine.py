@@ -51,7 +51,7 @@ class MacroEngine:
         if self.ds.exog.empty:
             return []
         state = macro_state_frame(self.ds.exog)
-        out = []
+        out: list[tuple[Finding, Callable[[np.ndarray], TestResult]]] = []
         span = "{} to {}".format(*self.splits.span("train"))
         for col in state.columns:
             x = state[col]
