@@ -154,9 +154,9 @@ class AdversarialEngine:
                  bool(x3.get("sharpe", -1) > 0), x3.get("sharpe"), "SR>0 at 3x costs"))
         A(Attack("latency_plus1", "Does it survive one extra bar of latency?", "reject",
                  bool(cs["latency_plus1"]["sharpe"] > 0), cs["latency_plus1"]["sharpe"], "SR>0"))
-        sh = [cs["entry_shift_-1"]["sharpe"], cs["entry_shift_+1"]["sharpe"]]
-        A(Attack("entry_displacement", "Does it survive entries displaced by +/-1 bar?", "reject",
-                 bool(min(sh) > 0), sh, "SR>0 both ways"))
+        sh = [cs["entry_shift_+1"]["sharpe"], cs["entry_shift_+2"]["sharpe"]]
+        A(Attack("entry_displacement", "Does it survive entries delayed by 1 and 2 bars?", "reject",
+                 bool(min(sh) > 0), sh, "SR>0 for both delays"))
 
         rx = rb.randomized_execution(ctx, g, tr, cb, 50, self.rng)
         d.robustness["randomized_execution"] = rx

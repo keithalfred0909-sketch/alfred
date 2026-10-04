@@ -149,7 +149,8 @@ def cost_stress(ctx: EvalContext, g: Genome, fit: slice, window: slice, multipli
         out[f"x{mlt:g}"] = {"sharpe": r.sharpe, "total_return": r.total_return, "pf": r.profit_factor}
     lat = ctx.backtest(g, fit, window, fitted=fs, extra_latency=1, count=False).metrics
     out["latency_plus1"] = {"sharpe": lat.sharpe, "total_return": lat.total_return}
-    for sh in (-1, 1):
+    # Only DELAYED entries: shifting earlier would act before the signal exists (look-ahead by construction).
+    for sh in (1, 2):
         r = ctx.backtest(g, fit, window, fitted=fs, entry_shift=sh, count=False).metrics
         out[f"entry_shift_{sh:+d}"] = {"sharpe": r.sharpe, "total_return": r.total_return}
     return out

@@ -112,3 +112,11 @@ def test_genome_signal_thresholds_and_neighbours():
     nb = neighbours(g)
     assert len(nb) >= 4 and all(n.key() != g.key() for n in nb)
     assert prim("ret_5").complexity == 1 and g.complexity == 2
+
+
+def test_regime_state_variables_have_no_infinities_on_flat_prices():
+    from xquant.market.regimes import state_variables
+    close = pd.Series(np.r_[np.linspace(1.1, 1.2, 200), np.full(60, 1.2), np.linspace(1.2, 1.1, 200)],
+                      index=pd.date_range("2020-01-01", periods=460, freq="1h", tz="UTC"))
+    sv = state_variables(close)
+    assert not np.isinf(sv.to_numpy()).any()

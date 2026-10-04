@@ -25,11 +25,13 @@ def state_variables(close: pd.Series) -> pd.DataFrame:
     vol60 = lr.rolling(60, min_periods=40).std()
     move20 = (np.log(close) - np.log(close).shift(20)).abs()
     path20 = lr.abs().rolling(20, min_periods=15).sum()
-    return pd.DataFrame({
+    out = pd.DataFrame({
         "log_vol20": np.log(vol20),
         "efficiency20": move20 / path20,
         "vol_ratio": np.log(vol5 / vol60),
     }, index=close.index)
+    # Flat stretches (holiday hours) give zero volatility / zero path length -> +/-inf; treat as missing.
+    return out.replace([np.inf, -np.inf], np.nan)
 
 
 @dataclass
