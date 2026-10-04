@@ -73,6 +73,7 @@ asset:
       hours: 4
       session_close: '17:00'
       tz: America/New_York
+      min_bars: 2
   splits:
     embargo_bars: 30
     test_end: 2022-12-31

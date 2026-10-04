@@ -42,14 +42,14 @@ def aggregate_sessions(bars: pd.DataFrame, session_close: str = "17:00", tz: str
     return out, info
 
 
-def aggregate_hours(bars: pd.DataFrame, hours: int, anchor: str = "17:00", tz: str = "America/New_York",
+def aggregate_hours(bars: pd.DataFrame, hours: float, anchor: str = "17:00", tz: str = "America/New_York",
                     min_bars: int | None = None) -> tuple[pd.DataFrame, dict[str, Any]]:
     """N-hour bars on the local wall clock, aligned so that one bar boundary falls on ``anchor`` (17:00 New
     York for FX/metals: H4 bars close at 21:00, 01:00, ..., 17:00). Each source bar is assigned by its CLOSE
     time to the bar (start, start+N] and the result is stamped at its close."""
     local = pd.DatetimeIndex(bars.index).tz_convert(tz).tz_localize(None)
     a = pd.Timedelta(anchor + ":00")
-    n = pd.Timedelta(hours=hours)
+    n = pd.Timedelta(minutes=round(hours * 60))
     start = ((local - a - pd.Timedelta(seconds=1)).floor("D") + a
              + ((local - a - pd.Timedelta(seconds=1)) - (local - a - pd.Timedelta(seconds=1)).floor("D")) // n * n)
     g = bars.groupby(start.to_numpy())
@@ -58,7 +58,7 @@ def aggregate_hours(bars: pd.DataFrame, hours: int, anchor: str = "17:00", tz: s
     if "spread" in bars.columns:
         agg["spread"] = g["spread"].mean()
     out = pd.DataFrame(agg)
-    need = min_bars if min_bars is not None else max(1, hours // 2)
+    need = min_bars if min_bars is not None else 1
     short = out["n"] < need
     stamps = (pd.DatetimeIndex(out.index) + n).tz_localize(tz, ambiguous="NaT", nonexistent="shift_forward")
     out.index = stamps.tz_convert("UTC").rename("timestamp")
@@ -72,10 +72,10 @@ class ResampledAssetSource(DataSource):
     kind = "resample_asset"
 
     def __init__(self, asset: str, session_close: str = "17:00", tz: str = "America/New_York", min_bars: int | None = None,
-                 offline: bool = False, hours: int | None = None, **extra: Any) -> None:
+                 offline: bool = False, hours: float | None = None, minutes: int | None = None, **extra: Any) -> None:
         super().__init__(asset=asset, session_close=session_close, tz=tz, hours=hours)
         self.asset, self.session_close, self.tz, self.min_bars = asset, session_close, tz, min_bars
-        self.hours = hours
+        self.hours = hours if hours else (minutes / 60 if minutes else None)
         self.offline = offline
         self.provenance: dict[str, Any] = {}
 

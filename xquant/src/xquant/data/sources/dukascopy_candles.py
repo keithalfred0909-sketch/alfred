@@ -113,7 +113,8 @@ class DukascopyCandleSource(DataSource):
         else:
             cur = cur.replace(hour=0, minute=0, second=0, microsecond=0)
         while cur < end:
-            yield cur
+            if not (self.granularity == "minute" and cur.weekday() == 5):  # FX/metals closed all Saturday
+                yield cur
             if self.granularity == "day":
                 cur = cur.replace(year=cur.year + 1)
             elif self.granularity == "hour":

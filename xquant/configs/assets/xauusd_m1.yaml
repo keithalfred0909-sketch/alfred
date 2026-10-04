@@ -1,5 +1,5 @@
-# XAUUSD 4-hour bars aggregated from the validated hourly Dukascopy bars (xauusd_h1.yaml),
-# aligned so a bar closes at 17:00 New York. No extra download; inherits H1 validation.
+# XAU/USD 1-minute Dukascopy BID+ASK candles, 2022-2026 (format verified on the live feed). Base dataset for
+# M15/M30; cross-checked monthly vs World Bank. Shorter history than H1 (minute files are one per day).
 asset:
   costs:
     commission_bps: 0.5
@@ -34,6 +34,17 @@ asset:
         value_col: Price
     timezone: America/New_York
     transform: level
+  cross_check:
+    kind: monthly_mean
+    max_median_pct: 1.5
+    min_return_corr: 0.9
+    source:
+      kind: datahub_csv
+      params:
+        date_col: Date
+        snapshot: gold_monthly_worldbank.csv
+        url: https://raw.githubusercontent.com/datasets/gold-prices/main/data/monthly.csv
+        value_col: Price
   macro:
   - availability_lag_days: 35
     description: US CPI-U YoY (BLS), 35-day lag
@@ -62,22 +73,25 @@ asset:
     timezone: America/New_York
     transform: level
   market: metals
-  name: XAU/USD (4h)
+  name: XAU/USD (1min, base for M15/M30)
   price_source:
-    kind: resample_asset
+    kind: dukascopy_candles
     params:
-      asset: XAUUSD_H1
-      hours: 4
-      session_close: '17:00'
-      tz: America/New_York
-      min_bars: 2
+      end: '2026-10-01'
+      expected_range:
+      - 200
+      - 10000
+      granularity: minute
+      instrument: XAUUSD
+      point: 0.001
+      start: '2022-01-01'
   splits:
-    embargo_bars: 30
-    test_end: 2022-12-31
-    train_end: 2018-12-31
-    validation_end: 2020-12-31
-  symbol: XAUUSD_H4
-  timeframe: 4h
+    train_end: '2024-06-30'
+    validation_end: '2025-03-31'
+    test_end: '2025-12-31'
+    embargo_bars: 1440
+  symbol: XAUUSD_M1
+  timeframe: 1min
   timezone: America/New_York
 stats:
   horizons:
@@ -86,4 +100,4 @@ stats:
   - 6
   - 12
   - 24
-  min_trades: 40
+  min_trades: 60
