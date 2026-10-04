@@ -169,3 +169,21 @@ def test_failed_periods_do_not_abort_others_and_resume(tmp_path, monkeypatch):
     assert cached == {"20230101.bi5", "20230301.bi5"}  # the others were still downloaded
     down.clear()
     assert len(DukascopyCandleSource("EURUSD", "2023-01-01", "2023-04-01", fetch=fetch, **kw).fetch_series()) > 0
+
+
+def test_session_aggregation_17h_new_york():
+    from xquant.data.sources.resample import aggregate_sessions
+    idx = pd.date_range("2024-03-04 00:00", "2024-03-16 00:00", freq="1h", tz="UTC")  # spans US DST start (Mar 10)
+    idx = idx[idx.dayofweek < 5]
+    n = len(idx)
+    bars = pd.DataFrame({"open": np.arange(n) + 1.0, "high": np.arange(n) + 1.5, "low": np.arange(n) + 0.5,
+                         "close": np.arange(n) + 1.2, "volume": 1.0, "spread": 0.0001}, index=idx)
+    out, info = aggregate_sessions(bars, "17:00", "America/New_York", min_bars=12)
+    local = out.index.tz_convert("America/New_York")
+    assert (local.hour == 17).all()  # stamped at 17:00 New York across the DST change
+    # session closing Tue 2024-03-05 17:00 NY (22:00 UTC) contains the bars closing after Mon 22:00 UTC
+    d = out.loc[pd.Timestamp("2024-03-05 22:00", tz="UTC")]
+    sel = bars[(bars.index > pd.Timestamp("2024-03-04 22:00", tz="UTC")) & (bars.index <= pd.Timestamp("2024-03-05 22:00", tz="UTC"))]
+    assert d["open"] == sel["open"].iloc[0] and d["close"] == sel["close"].iloc[-1]
+    assert d["high"] == sel["high"].max() and d["low"] == sel["low"].min()
+    assert info["short_sessions_dropped"] >= 1  # partial first/last sessions are dropped, not padded

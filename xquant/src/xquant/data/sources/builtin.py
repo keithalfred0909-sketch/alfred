@@ -317,4 +317,4 @@ def parse_date(s: str | date) -> date:
 
 
 # Additional sources live in their own modules; importing them here registers them.
-from xquant.data.sources import dukascopy_candles, mt5  # noqa: E402,F401
+from xquant.data.sources import dukascopy_candles, mt5, resample  # noqa: E402,F401
