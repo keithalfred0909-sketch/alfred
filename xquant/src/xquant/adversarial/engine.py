@@ -26,6 +26,11 @@ from xquant.validation import robustness as rb
 from xquant.validation.overfit import deflated_sharpe_report
 from xquant.validation.splits import DataSplits, SplitGuard
 
+# Bump whenever the attack battery changes meaningfully. Stored with every dossier; a strategy examined with
+# an older battery is re-examined instead of reusing its verdict (a corrected test is a new scientific reason).
+# v2: entry displacement uses delays (+1, +2) only.
+ATTACK_SUITE_VERSION = 2
+
 
 @dataclass
 class Attack:
@@ -81,7 +86,8 @@ class Dossier:
             if isinstance(x, pd.Series):
                 return None
             return x
-        return clean({"strategy_id": self.strategy_id, "genome": self.genome.to_dict(),
+        return clean({"strategy_id": self.strategy_id, "attack_suite_version": ATTACK_SUITE_VERSION,
+                      "genome": self.genome.to_dict(),
                       "description": self.genome.describe(), "complexity": self.genome.complexity,
                       "status": self.status, "reasons": self.reasons, "score": self.score,
                       "train": self.train, "validation": self.validation, "test": self.test, "final": self.final,

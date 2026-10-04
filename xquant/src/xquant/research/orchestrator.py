@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from xquant.adversarial.engine import AdversarialEngine, Dossier, score
+from xquant.adversarial.engine import ATTACK_SUITE_VERSION, AdversarialEngine, Dossier, score
 from xquant.backtest.engine import MarketArrays
 from xquant.config import XQuantConfig
 from xquant.data.engine import DataEngine, MarketDataset
@@ -386,7 +386,8 @@ class ResearchOrchestrator:
                         break
                     g = ind.genome
                     prior = self.memory.known_strategy(g.signature, self.asset, self.dv)
-                    if prior:  # DO NOT REDISCOVER: reuse the stored verdict
+                    if prior and prior["dossier"].get("attack_suite_version", 1) == ATTACK_SUITE_VERSION:
+                        # DO NOT REDISCOVER: same data, same battery -> reuse the stored verdict
                         skipped += 1
                         continue
                     d = adv.examine(g, n_trials, var, pbo)
