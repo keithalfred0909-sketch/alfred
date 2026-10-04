@@ -81,7 +81,7 @@ class DukascopyCandleSource(DataSource):
     BASE = "https://datafeed.dukascopy.com/datafeed"
 
     def __init__(self, instrument: str, start: str, end: str, granularity: str = "hour", point: float = 1e-5,
-                 expected_range: list[float] | None = None, workers: int = 3, retries: int = 6,
+                 expected_range: list[float] | None = None, workers: int = 3, retries: int = 7,
                  fetch: FetchFn | None = None, cache_dir: Path | None = None, **extra: Any) -> None:
         super().__init__(instrument=instrument, start=start, end=end, granularity=granularity, point=point)
         if granularity not in GRANULARITY:
@@ -146,10 +146,10 @@ class DukascopyCandleSource(DataSource):
                 if attempt == self.retries - 1:
                     raise
                 time.sleep(max(exc.retry_after or 0.0, 2.0 * 2 ** attempt))
-            except DataUnavailableError:
+            except DataUnavailableError:  # resets/aborted tunnels cluster when the feed throttles: wait longer
                 if attempt == self.retries - 1:
                     raise
-                time.sleep(2 ** attempt)
+                time.sleep(3.0 * 2 ** attempt)
         return None
 
     def _is_recent(self, period: datetime) -> bool:
