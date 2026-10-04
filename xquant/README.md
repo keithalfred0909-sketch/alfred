@@ -131,6 +131,34 @@ Formatos para conectar más datos:
 - OHLCV (`csv_file`): `timestamp,open,high,low,close[,volume,spread]`
 - MetaTrader 5 (`mt5_csv`): export estándar `<DATE> <TIME> <OPEN> <HIGH> <LOW> <CLOSE> <TICKVOL> <VOL> <SPREAD>`
 
+## Resultados de la investigación sobre EUR/USD (2026-10-03/04)
+
+| Run | Dataset | Modo | Estrategias examinadas | Veredicto |
+|---|---|---|---|---|
+| RUN-00001 | Fed H.10 diario (solo cierre), 1999–2026 | standard | 30 | NO EDGE FOUND |
+| RUN-00002 | Fed H.10 diario (solo cierre), 1999–2026 | deep | 80 | NO EDGE FOUND |
+| RUN-00003 | Dukascopy H1 | standard | — | ABORTED (la limpieza borraba picos reales de NFP; corregido) |
+| RUN-00004 | Dukascopy H1, 2005–2026 | standard | 30 | NO EDGE FOUND (batería v1) |
+| RUN-00005 | Dukascopy D1 OHLC (sesiones 17:00 NY) | standard | 30 | NO EDGE FOUND (batería v1) |
+| RUN-00006 | Dukascopy H1, 2005–2026 | standard | 30 | NO EDGE FOUND |
+| RUN-00007 | Dukascopy D1 OHLC | standard | 30 | NO EDGE FOUND |
+| RUN-00008 | Dukascopy D1 OHLC | deep | 80 | NO EDGE FOUND |
+| RUN-00009 | Dukascopy H1, 2005–2026 | deep | 80 | NO EDGE FOUND |
+
+En total: 355 estrategias examinadas (312 REJECTED, 43 OVERFIT, ninguna superó la selección),
+~438.000 backtests contados como ensayos y 8.200 hipótesis. TEST y FINAL nunca se abrieron.
+
+Lo que sí es real (replicado fuera de muestra) pero no es explotable direccionalmente: agrupamiento de
+volatilidad, reversión de la volatilidad alta, agrupamiento de movimientos grandes y efectos por hora del día
+en H1 (p. ej. 05–06 h NY negativos, 21 h NY positivos). Estos últimos sobreviven a FDR y al holdout interno,
+pero su tamaño (0,06–0,11 desviaciones típicas, ~1 bp) queda por debajo de los costes (~2 bps ida y vuelta).
+Los mejores candidatos superan la mayoría de ataques (validación OOS, walk-forward, entradas aleatorias, costes)
+y caen por el Deflated Sharpe (N muy alto) y el PBO del proceso de búsqueda, y a menudo por depender de
+pocas operaciones: es la firma de la selección entre muchas variantes, no de una ventaja.
+
+Datos validados: H1 de Dukascopy frente al fixing de la Fed (mediana 0,67 bps, correlación de retornos 0,998;
+un reloj desplazado ±1 h da 5–7 bps).
+
 ## Limitaciones conocidas
 
 - Con datos diarios de solo cierre: sin OHLC, sin volumen, stops evaluados al cierre, ejecución al
