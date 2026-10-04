@@ -1,0 +1,43 @@
+# PRE-REGISTRATION (allocation) - do not edit after evaluation; the lab stores the SHA-256 and runs it once.
+# Run: uv run xquant allocate --spec configs/preregistered/tsmom_diversified_v1.yaml --offline
+name: tsmom_diversified_v1
+kind: tsmom
+registered_by: X-QUANT, 2026-10-04, before computing any allocation result
+hypothesis: 'Time-series momentum (Moskowitz, Ooi & Pedersen, Journal of Financial Economics 2012): the sign of
+  an asset''s own past return predicts its next-month return; a volatility-scaled, equally weighted portfolio of
+  such positions across FX, metals and an equity index earns a positive Sharpe ratio net of costs.'
+rationale: 'Most-documented systematic premium across asset classes. Caveat: weaker since ~2010; the universe here
+  is small (9 instruments).'
+universe:
+- EURUSD
+- GBPUSD
+- USDJPY
+- USDCAD
+- USDCHF
+- USDSEK
+- XAUUSD
+- XAGUSD
+- NAS100
+rules: daily sessions closing 17:00 NY; rebalance at the last session of each month using data up to that close;
+  position_i = sign(lookback log return) * 0.10 / (60-session daily vol * sqrt(252)), capped at 3; portfolio = average
+  over instruments with data; held until the next rebalance
+variants:
+- lookback: 252
+- lookback: 63
+costs_bps_per_unit_turnover:
+  EURUSD: 1.05
+  GBPUSD: 1.05
+  USDJPY: 1.05
+  USDCAD: 1.05
+  USDCHF: 1.05
+  USDSEK: 2.0
+  XAUUSD: 2.5
+  XAGUSD: 3.0
+  NAS100: 0.435
+splits:
+  train_end: '2016-12-31'
+  validation_end: '2019-12-31'
+  test_end: '2022-12-31'
+pass_rule: 'on TRAIN+VALIDATION (no parameter is fitted): Sharpe > 0 with stationary-bootstrap 95% CI lower bound
+  > 0, deflated Sharpe >= 0.95 (N = allocation variants registered), >= 50% profitable years; then TEST once (Sharpe
+  > 0), then FINAL once'
