@@ -220,4 +220,5 @@ def breakdowns(res: BacktestResult, regimes: pd.Series | None, tz: str) -> dict[
 
 def stressed_costs(c: CostModel, mult: float) -> CostModel:
     return CostModel(spread_bps=c.spread_bps * mult, commission_bps=c.commission_bps * mult,
-                     slippage_bps=c.slippage_bps * mult, latency_bars=c.latency_bars)
+                     slippage_bps=c.slippage_bps * mult, latency_bars=c.latency_bars,
+                     use_data_spread=c.use_data_spread)

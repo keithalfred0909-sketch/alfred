@@ -122,6 +122,23 @@ def cmd_daytrade(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ml(args: argparse.Namespace) -> int:
+    from xquant.dashboard.render import render_dashboard
+    from xquant.memory.store import ResearchMemory
+    from xquant.ml.walkforward import MLStudy, load_spec, write_report
+    cfg = load_config("EURUSD", _overrides(args))
+    setup_logging(args.log_level, PROJECT_ROOT / cfg.research.runs_dir / "xquant.log.jsonl")
+    mem = ResearchMemory(cfg.research.memory_path)
+    out = MLStudy(load_spec(args.spec), mem, offline=args.offline).run()
+    md, js = write_report(out)
+    mem.update_run(out["run_id"], report_path=str(md.relative_to(PROJECT_ROOT)))
+    render_dashboard(mem)
+    for r in out["results"]:
+        print(f"{r['asset']}: {r['status']} | Sharpe {r['primary'].get('sharpe', float('nan')):.2f} CI {r['sharpe_ci']} | {r['checks']}")
+    print(f"\n{out['verdict']}\nreport: {md}")
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -206,6 +223,11 @@ def main(argv: list[str] | None = None) -> int:
     dt.add_argument("--offline", action="store_true", help="use cached data only")
     dt.add_argument("--memory", help="research memory path")
     dt.set_defaults(fn=cmd_daytrade)
+    ml = sub.add_parser("ml", help="run the pre-registered walk-forward ML study once")
+    ml.add_argument("--spec", required=True)
+    ml.add_argument("--offline", action="store_true")
+    ml.add_argument("--memory")
+    ml.set_defaults(fn=cmd_ml)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")
