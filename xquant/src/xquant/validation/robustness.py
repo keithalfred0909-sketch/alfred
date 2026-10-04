@@ -181,6 +181,10 @@ def timeframe_perturbation(rebuild: Callable[[pd.DataFrame], EvalContext], bars:
         c2 = rebuild(sub)
         f2 = slice((fit.start or 0) // 2, fit.stop // 2)
         w2 = slice((window.start or 0) // 2, window.stop // 2)
+        missing = [c.feature for c in g.conditions if not c2.exprs[c.feature].primitives() <= set(c2.prims)]
+        if missing:  # e.g. sub-hourly session features do not exist on the coarser bars
+            out[f"phase{phase}"] = {"sharpe": float("nan"), "trades": 0, "status": f"NOT APPLICABLE (no {missing})"}
+            continue
         res = c2.backtest(replace(g, hold=max(1, g.hold // 2)), f2, w2, count=False).metrics
         out[f"phase{phase}"] = {"sharpe": res.sharpe, "trades": res.trades,
                                 "status": "OK" if res.trades >= min_trades // 2 else "INSUFFICIENT DATA"}
