@@ -82,6 +82,14 @@ def cmd_confirm(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_portfolio(args: argparse.Namespace) -> int:
+    from xquant.memory.store import ResearchMemory
+    from xquant.portfolio import format_view, portfolio_view
+    cfg = load_config("EURUSD", _overrides(args))
+    print(format_view(portfolio_view(ResearchMemory(cfg.research.memory_path), args.min_trades_per_day)))
+    return 0
+
+
 def cmd_dashboard(args: argparse.Namespace) -> int:
     from xquant.dashboard.render import render_dashboard, serve
     from xquant.memory.store import ResearchMemory
@@ -148,6 +156,10 @@ def main(argv: list[str] | None = None) -> int:
     cf.add_argument("--offline", action="store_true", help="use cached/snapshotted data only")
     cf.add_argument("--memory", help="research memory path")
     cf.set_defaults(fn=cmd_confirm)
+    pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
+    pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
+    pf.add_argument("--memory", help="research memory path")
+    pf.set_defaults(fn=cmd_portfolio)
     db = sub.add_parser("dashboard", help="render or serve the dashboard")
     db.add_argument("--serve", action="store_true")
     db.add_argument("--port", type=int, default=8765)

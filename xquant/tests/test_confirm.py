@@ -1,6 +1,7 @@
 """Confirmatory (pre-registered) mode: controls and the no-editing / contamination rules."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from tests.conftest import synthetic_dataset
@@ -67,3 +68,22 @@ def test_spec_must_match_config_asset(tmp_path):
     spec["asset"] = "EURUSD_H1"
     with pytest.raises(ConfigError, match="registered for"):
         ConfirmatoryStudy(_cfg(ds, tmp_path), spec)
+
+
+def test_portfolio_only_uses_validated_strategies(tmp_path):
+    from xquant.memory.store import pack
+    from xquant.portfolio import portfolio_view
+    mem = ResearchMemory(tmp_path / "m.db")
+    assert portfolio_view(mem, 1.0)["verdict"].startswith("NO PORTFOLIO")
+    dates = [str(d.date()) for d in pd.date_range("2020-01-01", periods=50, freq="7D")]
+    rng = np.random.default_rng(0)
+    for i, status in enumerate(["ROBUST", "ROBUST", "REJECTED"]):
+        eq = list(np.cumsum(rng.normal(0.002, 0.01, 50)))
+        dossier = {"validation": {"trades": 252, "years": 2.0, "sharpe": 1.0}, "equity": {"dates": dates, "combined": eq}}
+        mem.conn.execute("INSERT INTO strategies (id, signature, asset, dataset_version, status, description, dossier) "
+                         "VALUES (?,?,?,?,?,?,?)", (f"S{i}", f"g{i}", "A", "v", status, "rule", pack(dossier)))
+    mem.conn.commit()
+    v = portfolio_view(mem, 1.0)
+    assert [c["id"] for c in v["components"]] == ["S0", "S1"]  # the rejected one is never combined
+    assert v["portfolio_trades_per_day"] == 1.0 and "below" not in v["verdict"]
+    assert "approx_portfolio_sharpe" in v and set(v["correlation"]) == {"S0", "S1"}
