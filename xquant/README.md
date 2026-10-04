@@ -159,6 +159,45 @@ pocas operaciones: es la firma de la selección entre muchas variantes, no de un
 Datos validados: H1 de Dukascopy frente al fixing de la Fed (mediana 0,67 bps, correlación de retornos 0,998;
 un reloj desplazado ±1 h da 5–7 bps).
 
+## Resultados posteriores: oro, temporalidades, frecuencia, Nasdaq, valor relativo y DXY (2026-10-04)
+
+| Run | Dataset | Qué se probó | Veredicto |
+|---|---|---|---|
+| RUN-00010/12 | XAU/USD H1 2008–2026 | standard / deep | NO EDGE FOUND |
+| RUN-00011/13/14 | XAU/USD D1, H4, H2 | otras temporalidades | NO EDGE FOUND |
+| RUN-00015/16 | EUR/USD H4, H2 | otras temporalidades | NO EDGE FOUND |
+| RUN-00017/18 | XAU/USD H1, EUR/USD H1 | exigir ≥1 operación/día | NO EDGE FOUND (ningún genoma positivo ni en TRAIN) |
+| RUN-00019/20/24 | XAU/USD M30, M15, M5 (2022–2026) | ≥1 operación/día | NO EDGE FOUND (ningún genoma positivo ni en TRAIN) |
+| RUN-00021/22 | XAU/USD H1, EUR/USD H1 | variables de sesión (rango del día previo, overnight, apertura NY) | NO EDGE FOUND |
+| RUN-00023 | Nasdaq 100 H1 2013–2026 | standard | NO EDGE FOUND |
+| RUN-00025/26 | XAU/USD H1, EUR/USD H1 | trailing stop + voto combinado de hipótesis | NO EDGE FOUND |
+| RUN-00027 | XAU/USD H1 + plata | valor relativo, divergencia residual y SMT | NO EDGE FOUND |
+| RUN-00028 | EUR/USD H1 + GBP/USD | valor relativo, divergencia residual y SMT | NO EDGE FOUND |
+| RUN-00029 | EUR/USD H1 + DXY sintético | **confirmatorio pre-registrado**: SMT con el DXY, 12 variantes, N=12 | NO EDGE FOUND (las 12 con Sharpe negativo en TRAIN y VALIDATION) |
+| RUN-00030 | EUR/USD H1 + DXY + dólar ex-EUR | exploratorio con divergencias | NO EDGE FOUND |
+
+Mejores candidatos encontrados (todos rechazados): largos en oro H1 con ~4 % anual en TRAIN y ~10 % en
+VALIDATION (STR-000363), que caen porque sin su 5 % de mejores operaciones pierden dinero y porque su Sharpe
+no supera el Deflated Sharpe; buena parte es probablemente la deriva alcista del oro 2008–2020.
+
+Pista más interesante (no confirmada): "momentum del residual del euro" - cuando EUR/USD ha caído más de lo
+que explica el dólar frente al resto de divisas (residual a 20 h en el decil inferior), sigue cayendo
+2–10 bps en las 3–24 h siguientes. Aparece frente a GBP/USD (RUN-00028) y frente a la cesta ex-EUR
+(RUN-00030, q de descubrimiento 0,00015) pero falla la confirmación en el holdout interno en ambos casos
+(OVERFIT). TEST/FINAL siguen sin abrir.
+
+DXY sintético (fórmula ICE sobre 6 pares de Dukascopy, desde 2005) validado contra el índice de Dukascopy
+(2017–2026): correlación de retornos horarios 0,978 sin desfase, error de seguimiento 1,9 bps/h
+(`research_output/validation/dxy_synthetic_validation.md`).
+
+### Modo confirmatorio
+
+`uv run xquant confirm --spec configs/preregistered/<nombre>.yaml --offline` evalúa una hipótesis escrita
+antes de ver resultados (≤20 variantes fijas). Guarda el SHA-256 de la especificación y rechaza ediciones o
+repeticiones; el Deflated Sharpe usa N = variantes registradas para el activo, salvo que alguna variable ya se
+haya usado en investigación exploratoria (entonces N = todos los ensayos). `uv run xquant portfolio` combina
+solo estrategias validadas (ROBUST) y mide la frecuencia de operaciones a nivel de cartera.
+
 ## Limitaciones conocidas
 
 - Con datos diarios de solo cierre: sin OHLC, sin volumen, stops evaluados al cierre, ejecución al
