@@ -22,7 +22,7 @@ import pandas as pd
 import requests
 
 from xquant.data.sources.base import CACHE_DIR, DATASETS_DIR, DataSource, FetchFn, register
-from xquant.errors import ConfigError, DataNotFound, DataQualityError, DataUnavailableError
+from xquant.errors import ConfigError, DataNotFound, DataQualityError, DataUnavailableError, RateLimited
 from xquant.logging_utils import get_logger
 
 log = get_logger("data.sources")
@@ -35,6 +35,9 @@ def http_get(url: str, timeout: float = 60.0) -> bytes:
         raise DataUnavailableError(f"cannot reach {url}: {exc}") from exc
     if resp.status_code == 404:
         raise DataNotFound(f"{url} returned HTTP 404")
+    if resp.status_code == 429:
+        ra = resp.headers.get("Retry-After")
+        raise RateLimited(f"{url} returned HTTP 429", float(ra) if ra and ra.replace(".", "", 1).isdigit() else None)
     if resp.status_code != 200:
         raise DataUnavailableError(f"{url} returned HTTP {resp.status_code}")
     return resp.content

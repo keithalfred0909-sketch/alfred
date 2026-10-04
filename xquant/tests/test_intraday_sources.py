@@ -131,3 +131,20 @@ def test_observed_spread_is_charged_only_when_wider():
     m2.vol = np.full(n, 0.001)
     wide = run_backtest(m2, entries, 1, 2, None, None, c, slice(0, n))
     assert wide.trades["cost"].iloc[0] == pytest.approx(0.00055 / 1.1)
+
+
+def test_rate_limited_downloads_back_off_and_succeed(tmp_path, monkeypatch):
+    from xquant.errors import RateLimited
+    monkeypatch.setattr("xquant.data.sources.dukascopy_candles.time.sleep", lambda s: None)
+    blob = _blob(_hourly_rows(24 * 31))
+    calls = {"n": 0}
+
+    def fetch(url):
+        calls["n"] += 1
+        if calls["n"] % 2 == 1:
+            raise RateLimited(url, retry_after=1)
+        return blob
+
+    src = DukascopyCandleSource("EURUSD", "2023-01-01", "2023-02-01", point=1e-5, fetch=fetch,
+                                cache_dir=tmp_path, workers=1)
+    assert len(src.fetch_series()) > 0 and calls["n"] >= 4

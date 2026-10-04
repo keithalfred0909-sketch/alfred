@@ -18,6 +18,14 @@ class DataNotFound(DataUnavailableError):
     """The source answered but has no data for the request (e.g. HTTP 404 for a period with no file)."""
 
 
+class RateLimited(DataUnavailableError):
+    """The source asked us to slow down (HTTP 429). ``retry_after`` is in seconds when the server says."""
+
+    def __init__(self, msg: str, retry_after: float | None = None) -> None:
+        super().__init__(msg)
+        self.retry_after = retry_after
+
+
 class DataQualityError(XQuantError):
     """Data failed validation badly enough that research on it would be meaningless."""
 
