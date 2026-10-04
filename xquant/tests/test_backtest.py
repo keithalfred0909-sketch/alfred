@@ -120,3 +120,19 @@ def test_regime_state_variables_have_no_infinities_on_flat_prices():
                       index=pd.date_range("2020-01-01", periods=460, freq="1h", tz="UTC"))
     sv = state_variables(close)
     assert not np.isinf(sv.to_numpy()).any()
+
+
+def test_session_features_are_causal_on_intraday_bars():
+    rng = np.random.default_rng(5)
+    idx = pd.date_range("2023-01-02 00:00", periods=900, freq="1h", tz="UTC")
+    c = 1900 * np.exp(np.cumsum(rng.normal(0, 0.002, len(idx))))
+    o = np.r_[c[0], c[:-1]]
+    bars = pd.DataFrame({"open": o, "high": np.maximum(o, c) * 1.001, "low": np.minimum(o, c) * 0.999,
+                         "close": c, "volume": 1.0}, index=idx)
+    P = build_primitives(bars, None, "America/New_York")
+    names = ["sess_ret", "sess_pos", "sess_bar", "pday_pos", "pday_hi", "pday_lo", "on_pos", "ny_ret"]
+    assert set(names) <= set(P)
+    for name in names:
+        assert P[name].notna().sum() > 100, name
+        assert_causal(lambda b, n=name: build_primitives(b, None, "America/New_York")[n], bars, [300, 455, 899], name)
+    assert P["sess_pos"].dropna().between(0, 1).all()

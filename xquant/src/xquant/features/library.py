@@ -64,6 +64,7 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
     P["bars_into_month"] = mid.groupby(mid).cumcount().astype(float)
     if local.hour.nunique() > 1:
         P["hour"] = pd.Series(local.hour.astype(float), index=bars.index)
+        P.update(session_features(bars, local, vol[20]))
     if bars[["open", "high", "low"]].notna().all(axis=None):
         rng_ = np.log(bars["high"] / bars["low"])
         P["range_vol"] = rng_ / vol[20]
@@ -82,6 +83,48 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
     return {k: v.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, v in P.items()}
 
 
+def session_features(bars: pd.DataFrame, local: pd.DatetimeIndex, vol: pd.Series,
+                     roll: str = "17:00", ny_anchor_h: float = 16.0) -> dict[str, pd.Series]:
+    """Causal session-structure features for intraday bars (bars stamped at their close).
+
+    The trading day rolls at ``roll`` local time (17:00 New York, the FX/futures convention). The first
+    ``ny_anchor_h`` hours of a session (17:00 -> 09:00 NY) form the overnight range. Every value at bar t
+    uses only bars of the current session up to t and completed previous sessions.
+    """
+    c = bars["close"]
+    hi = bars["high"].fillna(c)
+    lo = bars["low"].fillna(c)
+    op = bars["open"].fillna(c.shift(1))
+    naive = local.tz_localize(None)
+    rd = pd.Timedelta(roll + ":00")
+    day = (naive - rd - pd.Timedelta(seconds=1)).floor("D")
+    key = pd.Series(day, index=bars.index)
+    hours_in = pd.Series(((naive - rd - day) / pd.Timedelta(hours=1)).to_numpy(), index=bars.index)
+    g = lambda s: s.groupby(key.to_numpy())  # noqa: E731
+    sess_open = g(op).transform("first")
+    run_hi, run_lo = g(hi).cummax(), g(lo).cummin()
+    v = vol.replace(0, np.nan)
+    out: dict[str, pd.Series] = {}
+    out["sess_ret"] = np.log(c / sess_open) / v
+    out["sess_pos"] = (c - run_lo) / (run_hi - run_lo).replace(0, np.nan)
+    out["sess_bar"] = g(c).cumcount().astype(float)
+    daily = pd.DataFrame({"h": g(hi).max(), "l": g(lo).min()}).shift(1)  # previous COMPLETED session
+    ph = key.map(daily["h"]).astype(float)
+    pl = key.map(daily["l"]).astype(float)
+    out["pday_pos"] = (c - pl) / (ph - pl).replace(0, np.nan)
+    out["pday_hi"] = np.log(c / ph) / v
+    out["pday_lo"] = np.log(c / pl) / v
+    on = hours_in <= ny_anchor_h  # overnight part of the session (bar closes up to 09:00 NY)
+    on_hi = g(hi.where(on)).cummax()
+    on_lo = g(lo.where(on)).cummin()
+    anchor = g(c.where(on)).ffill()
+    on_hi, on_lo = g(on_hi).ffill(), g(on_lo).ffill()
+    after = ~on
+    out["on_pos"] = ((c - on_lo) / (on_hi - on_lo).replace(0, np.nan)).where(after)
+    out["ny_ret"] = (np.log(c / anchor) / v).where(after)
+    return {k: s.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, s in out.items()}
+
+
 def _streak(r: pd.Series) -> pd.Series:
     s = np.sign(r.fillna(0.0)).to_numpy()
     out = np.zeros(len(s))
@@ -93,7 +136,7 @@ def _streak(r: pd.Series) -> pd.Series:
     return pd.Series(out, index=r.index)
 
 
-CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month"}
+CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar"}
 
 # ---------------------------------------------------------------------------------------------------
 # expression grammar
