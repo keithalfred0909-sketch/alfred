@@ -55,6 +55,9 @@ CREATE TABLE IF NOT EXISTS trials (
   asset TEXT, dataset_version TEXT, n INTEGER, sum_sr REAL, sum_sr2 REAL, PRIMARY KEY(asset, dataset_version));
 CREATE TABLE IF NOT EXISTS log (
   id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, at TEXT, level TEXT, message TEXT);
+CREATE TABLE IF NOT EXISTS preregistrations (
+  name TEXT, asset TEXT, dataset_version TEXT, sha256 TEXT, registered_at TEXT, spec BLOB, n_variants INTEGER,
+  contaminated TEXT, run_id TEXT, verdict TEXT, PRIMARY KEY(name, asset));
 """
 
 
@@ -258,6 +261,37 @@ class ResearchMemory:
             return (int(r["n"]) if r else 0, 0.0)
         n, s, s2 = r["n"], r["sum_sr"], r["sum_sr2"]
         return int(n), float(max(s2 / n - (s / n) ** 2, 0.0))
+
+    # ---- pre-registered (confirmatory) studies ----------------------------------------------------
+    def registration(self, name: str, asset: str) -> dict[str, Any] | None:
+        r = self.conn.execute("SELECT * FROM preregistrations WHERE name=? AND asset=?", (name, asset)).fetchone()
+        return None if not r else {**dict(r), "spec": unpack(r["spec"], {})}
+
+    def register(self, name: str, asset: str, dv: str, sha: str, spec: dict[str, Any], n_variants: int,
+                 contaminated: list[str]) -> None:
+        with self.tx() as c:
+            c.execute("INSERT INTO preregistrations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                      (name, asset, dv, sha, now(), pack(spec), n_variants, _j(contaminated), None, None))
+
+    def complete_registration(self, name: str, asset: str, run_id: str, verdict: str) -> None:
+        with self.tx() as c:
+            c.execute("UPDATE preregistrations SET run_id=?, verdict=? WHERE name=? AND asset=?",
+                      (run_id, verdict, name, asset))
+
+    def registered_variants(self, asset: str) -> int:
+        r = self.conn.execute("SELECT COALESCE(SUM(n_variants), 0) FROM preregistrations WHERE asset=?", (asset,)).fetchone()
+        return int(r[0])
+
+    def feature_explored(self, feature: str) -> dict[str, int]:
+        """Exploratory hypotheses/strategies (any asset) that already used ``feature``: a 'pre-registered' test
+        of an already-explored feature is not confirmatory."""
+        pat = f"%{feature}%"
+        out: dict[str, int] = {}
+        for table, col in (("hypotheses", "variables"), ("strategies", "genome")):
+            for r in self.conn.execute(f"SELECT asset, COUNT(*) AS n FROM {table} WHERE {col} LIKE ? GROUP BY asset",
+                                       (pat,)):
+                out[f"{table}:{r['asset']}"] = int(r["n"])
+        return out
 
     # ---- maintenance -----------------------------------------------------------------------------
     def compact(self, max_points: int = 400) -> dict[str, int]:

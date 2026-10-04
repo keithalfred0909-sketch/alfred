@@ -1,0 +1,69 @@
+"""Confirmatory (pre-registered) mode: controls and the no-editing / contamination rules."""
+
+import numpy as np
+import pytest
+
+from tests.conftest import synthetic_dataset
+from tests.test_integration import _cfg, _edge_returns
+from xquant.errors import ConfigError
+from xquant.memory.store import ResearchMemory
+from xquant.report.builder import build_markdown
+from xquant.research.confirm import ConfirmatoryStudy, spec_sha256
+
+
+def _spec(name="ret5_reversal", feature="ret_5"):
+    return {"name": name, "asset": "SYN", "hypothesis": "after a sharp 5-bar drop the price drifts up",
+            "variants": [{"conditions": [{"feature": feature, "side": "low", "q": 0.1}], "direction": 1, "hold": h}
+                         for h in (3, 5)]}
+
+
+@pytest.mark.slow
+def test_positive_control_preregistered_edge_is_confirmed(tmp_path):
+    ds = synthetic_dataset(_edge_returns(5000, seed=5))
+    cfg = _cfg(ds, tmp_path)
+    mem = ResearchMemory(cfg.research.memory_path)
+    out = ConfirmatoryStudy(cfg, _spec(), memory=mem, dataset=ds).run()
+    assert out.preregistration["multiple_testing_n"] == 2  # only the registered variants count
+    assert not out.preregistration["contaminated_features"]
+    assert out.verdict.startswith("EDGE FOUND"), [(d["status"], d["reasons"][:3]) for d in out.dossiers]
+    md = build_markdown(out)
+    assert "Pre-registered hypothesis" in md and spec_sha256(_spec()) in md and "Feature discovery" not in md
+    # a confirmatory test runs once, and a registered spec cannot be edited
+    with pytest.raises(ConfigError, match="runs once"):
+        ConfirmatoryStudy(cfg, _spec(), memory=mem, dataset=ds).run()
+    edited = _spec()
+    edited["variants"][0]["hold"] = 4
+    with pytest.raises(ConfigError, match="cannot be edited"):
+        ConfirmatoryStudy(cfg, edited, memory=mem, dataset=ds).run()
+
+
+@pytest.mark.slow
+def test_negative_control_random_walk_is_not_confirmed(tmp_path):
+    ds = synthetic_dataset(np.random.default_rng(99).normal(0, 0.006, 5000))
+    cfg = _cfg(ds, tmp_path)
+    out = ConfirmatoryStudy(cfg, _spec(), memory=ResearchMemory(cfg.research.memory_path), dataset=ds).run()
+    assert out.verdict == "NO EDGE FOUND", out.verdict_detail
+    assert not any(d["status"] == "ROBUST" for d in out.dossiers)
+
+
+def test_contaminated_feature_pays_the_exploratory_penalty(tmp_path):
+    ds = synthetic_dataset(np.random.default_rng(7).normal(0, 0.006, 3000))
+    cfg = _cfg(ds, tmp_path)
+    mem = ResearchMemory(cfg.research.memory_path)
+    # exploratory research already used ret_5 (any asset) and ran many backtests on this dataset
+    mem.conn.execute("INSERT INTO hypotheses (id, signature, asset, dataset_version, variables, status) "
+                     "VALUES ('HYP-X', 'x', 'OTHER', 'v', '{\"feature\": \"ret_5\"}', 'REJECTED')")
+    mem.conn.commit()
+    mem.add_trials("SYN", ds.version, list(np.linspace(-1, 1, 500)))
+    out = ConfirmatoryStudy(cfg, _spec("contaminated"), memory=mem, dataset=ds).run()
+    assert out.preregistration["contaminated_features"] == {"ret_5": {"hypotheses:OTHER": 1}}
+    assert out.preregistration["multiple_testing_n"] == 500 + 2
+    assert out.trials["family"] == "exploratory"
+
+
+def test_spec_must_match_config_asset(tmp_path):
+    ds = synthetic_dataset(np.random.default_rng(1).normal(0, 0.006, 600))
+    spec = _spec()
+    spec["asset"] = "EURUSD_H1"
+    with pytest.raises(ConfigError, match="registered for"):
+        ConfirmatoryStudy(_cfg(ds, tmp_path), spec)

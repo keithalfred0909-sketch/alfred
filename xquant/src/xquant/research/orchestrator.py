@@ -98,6 +98,7 @@ class ResearchOutcome:
     trials: dict[str, Any] = field(default_factory=dict)
     split_access: list[dict[str, str]] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
+    preregistration: dict[str, Any] = field(default_factory=dict)  # confirmatory studies only
     elapsed_s: float = 0.0
 
 
@@ -282,11 +283,11 @@ class ResearchOrchestrator:
         self._say(f"{line}: {len(fs)} findings, {len(disc)} replicated discoveries")
         return fs
 
-    def _lookahead_audit(self, ds: MarketDataset, ctx: EvalContext) -> None:
+    def _lookahead_audit(self, ds: MarketDataset, ctx: EvalContext, names: list[str] | None = None) -> None:
         """Run the truncation test on a sample of primitives on the real dataset (cheap insurance)."""
         n = len(ds.bars)
         cuts = sorted({int(n * 0.5), int(n * 0.8), n - 1})
-        names = list(ctx.prims)[:: max(1, len(ctx.prims) // 12)]
+        names = names or list(ctx.prims)[:: max(1, len(ctx.prims) // 12)]
         tz = self.cfg.asset.timezone
 
         def prim_fn(nm: str) -> Callable[[pd.DataFrame], pd.Series]:

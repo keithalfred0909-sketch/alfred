@@ -65,6 +65,23 @@ def cmd_research(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_confirm(args: argparse.Namespace) -> int:
+    from xquant.dashboard.render import render_dashboard
+    from xquant.memory.store import ResearchMemory
+    from xquant.report.builder import write_report
+    from xquant.research.confirm import ConfirmatoryStudy, load_spec, summarise
+    spec = load_spec(args.spec)
+    cfg = load_config(spec["asset"], _overrides(args))
+    setup_logging(args.log_level, PROJECT_ROOT / cfg.research.runs_dir / "xquant.log.jsonl")
+    mem = ResearchMemory(cfg.research.memory_path)
+    out = ConfirmatoryStudy(cfg, spec, offline=args.offline, memory=mem).run()
+    md, js = write_report(out)
+    mem.update_run(out.run_id, report_path=str(md.relative_to(PROJECT_ROOT)))
+    dash = render_dashboard(mem)
+    print(f"\n{summarise(out)}\n\n{out.verdict}: {out.verdict_detail}\nreport: {md}\njson:   {js}\ndashboard: {dash}")
+    return 0
+
+
 def cmd_dashboard(args: argparse.Namespace) -> int:
     from xquant.dashboard.render import render_dashboard, serve
     from xquant.memory.store import ResearchMemory
@@ -126,6 +143,11 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--min-trades-per-day", type=float, help="require at least this trading frequency")
     r.add_argument("--focus", nargs="+", help="feature-name substrings to test first (e.g. x_px_dxy)")
     r.set_defaults(fn=cmd_research)
+    cf = sub.add_parser("confirm", help="run a pre-registered (confirmatory) hypothesis test once")
+    cf.add_argument("--spec", required=True, help="pre-registration YAML (configs/preregistered/*.yaml)")
+    cf.add_argument("--offline", action="store_true", help="use cached/snapshotted data only")
+    cf.add_argument("--memory", help="research memory path")
+    cf.set_defaults(fn=cmd_confirm)
     db = sub.add_parser("dashboard", help="render or serve the dashboard")
     db.add_argument("--serve", action="store_true")
     db.add_argument("--port", type=int, default=8765)

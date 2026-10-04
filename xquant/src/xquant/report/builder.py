@@ -127,34 +127,58 @@ def build_markdown(o: ResearchOutcome) -> str:
             L.append(f"- INSUFFICIENT DATA for: {', '.join(f['name'] for f in insuf)}")
         L.append("")
 
-    sect("Market discoveries", "market")
-    sect("Macro discoveries", "macro")
-    sect("News discoveries", "news")
-    fe = o.features
-    L += ["## Feature discovery", "",
-          f"{fe.get('candidates', 0)} candidate features, {fe.get('tests', 0)} (feature, horizon) IC tests on the discovery "
-          f"part of TRAIN; confirmed on the inner holdout: **{len(fe.get('confirmed', []))}** {fe.get('confirmed', [])[:10]}",
-          f"Status counts: {fe.get('status_counts', {})}", ""]
-    hy = o.hypotheses
-    L += ["## Top hypotheses", "",
-          f"{hy.get('generated', 0)} hypotheses ({hy.get('new', 0)} new, {hy.get('reused', 0)} reused from memory). "
-          f"Status counts: {hy.get('status_counts', {})}", ""]
-    if hy.get("validated"):
-        L += ["| ID | Hypothesis | n | effect size | p | q | confirm p | status |", "|---|---|---|---|---|---|---|---|"]
-        for h in hy["validated"][:10]:
-            L.append(f"| {h['id']} | {h['description']} | {h['sample']} | {_f(h['effect_size'], nd=3)} | {_f(h['p_value'], nd=5)} | "
-                     f"{_f(h['q_value'], nd=4)} | {_f(h['confirm_p'], nd=4)} | {h['status']} |")
+    pr = o.preregistration
+    if pr:
+        L += ["## Pre-registered hypothesis (confirmatory mode)", "",
+              f"**{pr['name']}** - registered {pr['registered_at']} by {pr.get('registered_by') or 'n/a'}; "
+              f"spec sha256 `{pr['sha256']}`", "", f"> {pr['hypothesis']}", ""]
+        if pr.get("rationale"):
+            L += [f"Rationale: {pr['rationale']}", ""]
+        L += [f"Variants fixed in advance ({len(pr['variants'])}):", ""] + [f"{i}. {v}" for i, v in enumerate(pr["variants"], 1)]
+        L += ["", f"Multiple-testing N for the deflated Sharpe: **{pr['multiple_testing_n']}**"]
+        if pr.get("contaminated_features"):
+            L.append(f"- CONTAMINATED (features already used by exploratory research, so N = every trial on the dataset): "
+                     f"{pr['contaminated_features']}")
+        else:
+            L.append("- Clean: no feature in the spec had been used by exploratory research before registration.")
+        L.append("")
     else:
-        L.append("No hypothesis survived FDR on the discovery window **and** confirmation on the inner holdout.")
-    if hy.get("top_rejected_or_overfit"):
-        L += ["", "Strongest hypotheses that failed confirmation (OVERFIT):", ""]
-        for h in hy["top_rejected_or_overfit"][:5]:
-            L.append(f"- {h['id']}: {h['description']} - discovery p={_f(h['p_value'], nd=5)}, confirmation p={_f(h['confirm_p'], nd=3)}, "
-                     f"confirmation effect {_f(h['confirm_effect'], nd=5)} vs {_f(h['effect'], nd=5)}")
-    L += ["", "## Research lines", "", "| Line | Status | Runs | Examined | Stop reason |", "|---|---|---|---|---|"]
-    for ln in o.lines:
-        L.append(f"| {ln['name']} | {ln['status']} | {ln['experiments']} | {ln['examined']} | {ln['stop_reason']} |")
-    L += ["", "## Top strategies", ""]
+        sect("Market discoveries", "market")
+        sect("Macro discoveries", "macro")
+        sect("News discoveries", "news")
+    fe = o.features
+    if not pr:
+        L += ["## Feature discovery", "",
+              f"{fe.get('candidates', 0)} candidate features, {fe.get('tests', 0)} (feature, horizon) IC tests on the discovery "
+              f"part of TRAIN; confirmed on the inner holdout: **{len(fe.get('confirmed', []))}** {fe.get('confirmed', [])[:10]}",
+              f"Status counts: {fe.get('status_counts', {})}", ""]
+        hy = o.hypotheses
+        L += ["## Top hypotheses", "",
+              f"{hy.get('generated', 0)} hypotheses ({hy.get('new', 0)} new, {hy.get('reused', 0)} reused from memory). "
+              f"Status counts: {hy.get('status_counts', {})}", ""]
+        if hy.get("validated"):
+            L += ["| ID | Hypothesis | n | effect size | p | q | confirm p | status |", "|---|---|---|---|---|---|---|---|"]
+            for h in hy["validated"][:10]:
+                L.append(f"| {h['id']} | {h['description']} | {h['sample']} | {_f(h['effect_size'], nd=3)} | {_f(h['p_value'], nd=5)} | "
+                         f"{_f(h['q_value'], nd=4)} | {_f(h['confirm_p'], nd=4)} | {h['status']} |")
+        else:
+            L.append("No hypothesis survived FDR on the discovery window **and** confirmation on the inner holdout.")
+        if hy.get("top_rejected_or_overfit"):
+            L += ["", "Strongest hypotheses that failed confirmation (OVERFIT):", ""]
+            for h in hy["top_rejected_or_overfit"][:5]:
+                L.append(f"- {h['id']}: {h['description']} - discovery p={_f(h['p_value'], nd=5)}, confirmation p={_f(h['confirm_p'], nd=3)}, "
+                         f"confirmation effect {_f(h['confirm_effect'], nd=5)} vs {_f(h['effect'], nd=5)}")
+        L += ["", "## Research lines", "", "| Line | Status | Runs | Examined | Stop reason |", "|---|---|---|---|---|"]
+        for ln in o.lines:
+            L.append(f"| {ln['name']} | {ln['status']} | {ln['experiments']} | {ln['examined']} | {ln['stop_reason']} |")
+    L += ["", "## Top strategies" if not pr else "## Pre-registered variants", ""]
+    if pr and o.dossiers:
+        L += ["| Strategy | Rules | Status | Train SR | Val SR | Val trades | Failed attacks |", "|---|---|---|---|---|---|---|"]
+        for d in o.dossiers:
+            fails = [a["name"] for a in d.get("attacks", []) if a.get("passed") is False and a.get("kind") != "warn"]
+            L.append(f"| {d.get('strategy_id')} | {d.get('description')} | {d['status']} | {_f(d['train'].get('sharpe'), nd=2)} | "
+                     f"{_f(d['validation'].get('sharpe'), nd=2)} | {d['validation'].get('trades')} | {', '.join(fails) or '-'} |")
+        L += ["", "Detail of the top 3:", ""]
     if not o.ranking:
         L += ["No strategy reached examination.", ""]
     for i, d in enumerate(o.ranking, 1):
