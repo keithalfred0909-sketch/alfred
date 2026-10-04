@@ -148,3 +148,24 @@ def test_rate_limited_downloads_back_off_and_succeed(tmp_path, monkeypatch):
     src = DukascopyCandleSource("EURUSD", "2023-01-01", "2023-02-01", point=1e-5, fetch=fetch,
                                 cache_dir=tmp_path, workers=1)
     assert len(src.fetch_series()) > 0 and calls["n"] >= 4
+
+
+def test_failed_periods_do_not_abort_others_and_resume(tmp_path, monkeypatch):
+    from xquant.errors import DataUnavailableError
+    monkeypatch.setattr("xquant.data.sources.dukascopy_candles.time.sleep", lambda s: None)
+    blob = _blob(_hourly_rows(24 * 28))
+    down = {"2023/01/BID_candles_hour_1.bi5"}
+
+    def fetch(url):
+        key = url.split("/EURUSD/")[1]
+        if key in down:
+            raise DataUnavailableError("reset")
+        return blob
+
+    kw = dict(point=1e-5, cache_dir=tmp_path, workers=1, min_interval=0, retries=2)
+    with pytest.raises(DataUnavailableError, match="1 period"):
+        DukascopyCandleSource("EURUSD", "2023-01-01", "2023-04-01", fetch=fetch, **kw).fetch_series()
+    cached = {p.name for p in (tmp_path / "dukascopy_candles" / "EURUSD" / "hour" / "BID").glob("*.bi5")}
+    assert cached == {"20230101.bi5", "20230301.bi5"}  # the others were still downloaded
+    down.clear()
+    assert len(DukascopyCandleSource("EURUSD", "2023-01-01", "2023-04-01", fetch=fetch, **kw).fetch_series()) > 0

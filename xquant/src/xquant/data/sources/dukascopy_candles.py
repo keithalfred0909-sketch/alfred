@@ -179,8 +179,19 @@ class DukascopyCandleSource(DataSource):
         return period.date() >= now.date()
 
     def _side(self, side: str, periods: list[datetime]) -> pd.DataFrame:
+        failed: list[str] = []
+
+        def get(p: datetime) -> bytes | None:
+            try:
+                return self._blob(p, side)
+            except DataUnavailableError as exc:  # keep going; report every failed period at the end
+                failed.append(f"{p.date()}: {str(exc)[:80]}")
+                return None
         with ThreadPoolExecutor(max_workers=self.workers) as pool:
-            blobs = list(pool.map(lambda p: self._blob(p, side), periods))
+            blobs = list(pool.map(get, periods))
+        if failed:
+            raise DataUnavailableError(f"Dukascopy {side}: {len(failed)} period(s) could not be downloaded after "
+                                       f"retries (everything else is cached; re-run to resume): {sorted(failed)[:5]}")
         frames = [decode_candles(b, p, self.point) for p, b in zip(periods, blobs, strict=True) if b]
         self.provenance[f"{side.lower()}_files"] = sum(b is not None for b in blobs)
         self.provenance[f"{side.lower()}_missing_periods"] = [str(p.date()) for p, b in zip(periods, blobs, strict=True)
