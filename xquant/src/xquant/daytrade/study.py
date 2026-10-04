@@ -78,17 +78,19 @@ class DayTradeStudy:
         self.rng = np.random.default_rng(seed)
         self.reps, self.rd_reps, self.cost = reps, random_dir_reps, cost_per_fill_frac
         self.guard = SplitGuard()
+        self.family = str(spec.get("family", FAMILY))  # multiple-testing family (one per market)
 
     def _bars(self) -> pd.DataFrame:
         if self.bars is not None:
             return self.bars
         from xquant.data.engine import DataEngine
-        bars, _, rep = DataEngine(load_config("NAS100_M1").asset, offline=self.offline).load_bars()
+        bars, _, rep = DataEngine(load_config(self.spec.get("data_asset", "NAS100_M1")).asset,
+                                  offline=self.offline).load_bars()
         return bars
 
     def run(self) -> dict[str, Any]:
         spec = self.spec
-        prior = self.memory.registration(spec["name"], FAMILY)
+        prior = self.memory.registration(spec["name"], self.family)
         if prior and prior["sha256"] != self.sha:
             raise ConfigError(f"strategy '{spec['name']}' was registered with different content; register a new version")
         if prior and prior.get("run_id"):
@@ -96,9 +98,9 @@ class DayTradeStudy:
         bars = self._bars()
         dv = hashlib.sha256(pd.util.hash_pandas_object(bars[["close"]]).to_numpy().tobytes()).hexdigest()[:16]
         if not prior:
-            self.memory.register(spec["name"], FAMILY, dv, self.sha, spec, len(spec["variants"]), [])
-        run_id = self.memory.start_run(FAMILY, "daytrade", dv, self.sha[:16], 0)
-        n_family = self.memory.registered_variants(FAMILY)
+            self.memory.register(spec["name"], self.family, dv, self.sha, spec, len(spec["variants"]), [])
+        run_id = self.memory.start_run(self.family, "daytrade", dv, self.sha[:16], 0)
+        n_family = self.memory.registered_variants(self.family)
         sp = spec["9_backtest"]["splits"]
         cut = {k: pd.Timestamp(sp[k]) for k in ("train_end", "validation_end", "test_end")}
 
@@ -179,7 +181,7 @@ class DayTradeStudy:
                         "calendar_days": int(len(all_days)), "sessions_with_1600_bar": int(len(sess_days))},
                "results": results, "verdict": verdict, "split_access": list(self.guard.log)}
         self.memory.record_split_access(run_id, self.guard.log)
-        self.memory.complete_registration(spec["name"], FAMILY, run_id, verdict)
+        self.memory.complete_registration(spec["name"], self.family, run_id, verdict)
         self.memory.update_run(run_id, status="FINISHED", verdict=verdict, finished_at=pd.Timestamp.now(tz="UTC").isoformat(),
                                summary={"detail": f"daytrade '{spec['name']}': "
                                                   + ", ".join(f"{r['variant']} -> {r['status']}" for r in results)})
