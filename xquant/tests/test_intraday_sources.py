@@ -199,3 +199,17 @@ def test_monthly_mean_cross_check():
     assert cross_check_monthly_mean(bars, ref * 1.002)["status"] == "PASSED"
     with pytest.raises(DataQualityError):
         cross_check_monthly_mean(bars * 0.1, ref)  # wrong point scaling
+
+
+def test_hour_aggregation_h4_aligned_to_17h_new_york():
+    from xquant.data.sources.resample import aggregate_hours
+    idx = pd.date_range("2024-01-08 00:00", "2024-01-12 00:00", freq="1h", tz="UTC")
+    n = len(idx)
+    bars = pd.DataFrame({"open": np.arange(n) + 1.0, "high": np.arange(n) + 1.5, "low": np.arange(n) + 0.5,
+                         "close": np.arange(n) + 1.2, "volume": 1.0}, index=idx)
+    out, info = aggregate_hours(bars, 4)
+    local = out.index.tz_convert("America/New_York")
+    assert set(local.hour) <= {17, 21, 1, 5, 9, 13}
+    b = out.loc[pd.Timestamp("2024-01-09 22:00", tz="UTC")]  # 17:00 NY close: hourly closes 18:00..22:00 UTC
+    sel = bars[(bars.index > pd.Timestamp("2024-01-09 18:00", tz="UTC")) & (bars.index <= pd.Timestamp("2024-01-09 22:00", tz="UTC"))]
+    assert b["open"] == sel["open"].iloc[0] and b["close"] == sel["close"].iloc[-1] and b["high"] == sel["high"].max()

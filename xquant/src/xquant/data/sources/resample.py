@@ -42,14 +42,40 @@ def aggregate_sessions(bars: pd.DataFrame, session_close: str = "17:00", tz: str
     return out, info
 
 
+def aggregate_hours(bars: pd.DataFrame, hours: int, anchor: str = "17:00", tz: str = "America/New_York",
+                    min_bars: int | None = None) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """N-hour bars on the local wall clock, aligned so that one bar boundary falls on ``anchor`` (17:00 New
+    York for FX/metals: H4 bars close at 21:00, 01:00, ..., 17:00). Each source bar is assigned by its CLOSE
+    time to the bar (start, start+N] and the result is stamped at its close."""
+    local = pd.DatetimeIndex(bars.index).tz_convert(tz).tz_localize(None)
+    a = pd.Timedelta(anchor + ":00")
+    n = pd.Timedelta(hours=hours)
+    start = ((local - a - pd.Timedelta(seconds=1)).floor("D") + a
+             + ((local - a - pd.Timedelta(seconds=1)) - (local - a - pd.Timedelta(seconds=1)).floor("D")) // n * n)
+    g = bars.groupby(start.to_numpy())
+    agg: dict[str, Any] = {"open": g["open"].first(), "high": g["high"].max(), "low": g["low"].min(),
+                           "close": g["close"].last(), "volume": g["volume"].sum(min_count=1), "n": g["close"].size()}
+    if "spread" in bars.columns:
+        agg["spread"] = g["spread"].mean()
+    out = pd.DataFrame(agg)
+    need = min_bars if min_bars is not None else max(1, hours // 2)
+    short = out["n"] < need
+    stamps = (pd.DatetimeIndex(out.index) + n).tz_localize(tz, ambiguous="NaT", nonexistent="shift_forward")
+    out.index = stamps.tz_convert("UTC").rename("timestamp")
+    info = {"bars": int(len(out)), "short_bars_dropped": int(short.sum()), "hours": hours, "anchor": f"{anchor} {tz}"}
+    out = out[~short.to_numpy()].drop(columns="n")
+    return out[out.index.notna()], info
+
+
 @register
 class ResampledAssetSource(DataSource):
     kind = "resample_asset"
 
-    def __init__(self, asset: str, session_close: str = "17:00", tz: str = "America/New_York", min_bars: int = 12,
-                 offline: bool = False, **extra: Any) -> None:
-        super().__init__(asset=asset, session_close=session_close, tz=tz)
+    def __init__(self, asset: str, session_close: str = "17:00", tz: str = "America/New_York", min_bars: int | None = None,
+                 offline: bool = False, hours: int | None = None, **extra: Any) -> None:
+        super().__init__(asset=asset, session_close=session_close, tz=tz, hours=hours)
         self.asset, self.session_close, self.tz, self.min_bars = asset, session_close, tz, min_bars
+        self.hours = hours
         self.offline = offline
         self.provenance: dict[str, Any] = {}
 
@@ -60,7 +86,10 @@ class ResampledAssetSource(DataSource):
         bars, meta, rep = DataEngine(base_cfg.asset, offline=self.offline).load_bars()
         if not meta.capabilities.ohlc:
             raise DataQualityError(f"{self.asset} has no OHLC; cannot build session bars")
-        out, info = aggregate_sessions(bars, self.session_close, self.tz, self.min_bars)
+        if self.hours:
+            out, info = aggregate_hours(bars, self.hours, self.session_close, self.tz, self.min_bars)
+        else:
+            out, info = aggregate_sessions(bars, self.session_close, self.tz, self.min_bars or 12)
         self.provenance = {"from": f"{self.asset} ({meta.source})", "base_sha256": meta.sha256,
                            "base_notes": meta.notes, **info}
         return out
