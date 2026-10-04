@@ -89,6 +89,11 @@ class DataEngine:
         from xquant.config import load_config
         from xquant.data.crosscheck import cross_check_daily
         cc = dict(self.asset.cross_check or {})
+        if cc.pop("kind", "daily_fixing") == "monthly_mean":
+            from xquant.data.crosscheck import cross_check_monthly_mean
+            src = build_source(cc["source"]["kind"], {**cc["source"]["params"], "offline": True})
+            return cross_check_monthly_mean(bars, src.fetch_series()["value"],
+                                            **{k: v for k, v in cc.items() if k not in ("source", "asset")})
         ref_cfg = load_config(str(cc.pop("asset")))
         ref_bars, _, _ = DataEngine(ref_cfg.asset, offline=True).load_bars()
         return cross_check_daily(bars, ref_bars["close"], **cc)

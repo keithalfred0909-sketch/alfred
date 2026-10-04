@@ -187,3 +187,15 @@ def test_session_aggregation_17h_new_york():
     assert d["open"] == sel["open"].iloc[0] and d["close"] == sel["close"].iloc[-1]
     assert d["high"] == sel["high"].max() and d["low"] == sel["low"].min()
     assert info["short_sessions_dropped"] >= 1  # partial first/last sessions are dropped, not padded
+
+
+def test_monthly_mean_cross_check():
+    from xquant.data.crosscheck import cross_check_monthly_mean
+    idx = pd.date_range("2015-01-01", "2020-12-31 23:00", freq="1h", tz="UTC")
+    rng = np.random.default_rng(1)
+    bars = pd.DataFrame({"close": 1200 * np.exp(np.cumsum(rng.normal(0, 0.001, len(idx))))}, index=idx)
+    ref = bars["close"].groupby(idx.tz_localize(None).to_period("M")).mean()
+    ref.index = ref.index.to_timestamp()
+    assert cross_check_monthly_mean(bars, ref * 1.002)["status"] == "PASSED"
+    with pytest.raises(DataQualityError):
+        cross_check_monthly_mean(bars * 0.1, ref)  # wrong point scaling

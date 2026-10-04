@@ -66,3 +66,27 @@ def cross_check_daily(bars: pd.DataFrame, reference: pd.Series, local_time: str 
         out["warning"] = f"a +/-1h shifted clock matches marginally better ({closer}); verify the source timezone"
     out["status"] = "PASSED"
     return out
+
+
+def cross_check_monthly_mean(bars: pd.DataFrame, reference: pd.Series, max_median_pct: float = 1.5,
+                             min_return_corr: float = 0.9, min_matches: int = 24) -> dict[str, Any]:
+    """Compare the monthly mean of intraday closes with an independent monthly-average reference
+    (e.g. World Bank Pink Sheet gold). Weaker than a same-time fixing check (catches wrong scale,
+    inversion, misread files, gross gaps - not hour-level clock errors), and reported as such."""
+    idx = pd.DatetimeIndex(bars.index).tz_convert("UTC").tz_localize(None)
+    monthly = bars["close"].groupby(idx.to_period("M")).mean()
+    ref = reference.copy()
+    ref.index = pd.DatetimeIndex(ref.index).to_period("M")
+    both = pd.concat([monthly.rename("src"), ref.rename("ref")], axis=1).dropna()
+    n = len(both)
+    if n < min_matches:
+        raise DataQualityError(f"monthly cross-check: only {n} overlapping months")
+    diff = (both["src"] / both["ref"] - 1).abs() * 100
+    corr = float(np.corrcoef(np.diff(np.log(both["src"])), np.diff(np.log(both["ref"])))[0, 1])
+    out: dict[str, Any] = {"kind": "monthly_mean", "matches": n, "median_abs_diff_pct": float(diff.median()),
+                           "p95_abs_diff_pct": float(diff.quantile(0.95)), "return_corr": corr,
+                           "note": "monthly-average check: does not verify intraday timestamps"}
+    if out["median_abs_diff_pct"] > max_median_pct or not corr >= min_return_corr:
+        raise DataQualityError(f"monthly cross-check FAILED vs reference: {out}")
+    out["status"] = "PASSED"
+    return out
