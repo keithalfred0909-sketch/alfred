@@ -25,6 +25,8 @@ def period_end(ts: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         end = naive.to_period("Q").to_timestamp(how="end")
     elif frequency == "daily":
         end = naive.normalize() + pd.Timedelta("23:59:59")
+    elif frequency == "bar":
+        end = naive  # already stamped at the moment the value is known (bar close)
     else:
         raise ValueError(f"unknown frequency {frequency}")
     return pd.DatetimeIndex(end).floor("s")
@@ -33,7 +35,7 @@ def period_end(ts: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
 def transform_series(s: pd.Series, transform: str, frequency: str) -> pd.Series:
     if transform == "level":
         return s
-    periods = {"monthly": 12, "quarterly": 4, "daily": 252}[frequency]
+    periods = {"monthly": 12, "quarterly": 4, "daily": 252, "bar": 252}[frequency]
     if transform == "yoy":
         return 100.0 * (s / s.shift(periods) - 1.0)
     if transform == "diff":

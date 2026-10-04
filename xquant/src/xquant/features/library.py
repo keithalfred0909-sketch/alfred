@@ -80,6 +80,12 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
             for k in [5, 20, 63]:
                 P[f"x_{col}_chg{k}"] = x - x.shift(k)
             P[f"x_{col}_z250"] = (x - x.rolling(250, min_periods=180).mean()) / x.rolling(250, min_periods=180).std()
+            if col.startswith("px_") and (x.dropna() > 0).all() and x.notna().sum() > 300:
+                # relative value (price series named px_*): z-score of the log spread vs the other asset
+                spread = lc - np.log(x)
+                for w in (60, 250):
+                    P[f"x_{col}_relz{w}"] = (spread - spread.rolling(w, min_periods=int(w * 0.75)).mean()) / \
+                        spread.rolling(w, min_periods=int(w * 0.75)).std()
     return {k: v.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, v in P.items()}
 
 

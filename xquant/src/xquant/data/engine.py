@@ -105,7 +105,8 @@ class DataEngine:
         for spec in specs:
             try:
                 src = build_source(spec.source.kind, self._source_params(spec.source.params))
-                raw = src.fetch_series()["value"]
+                frame = src.fetch_series()
+                raw = frame["value"] if "value" in frame.columns else frame["close"]
             except (DataUnavailableError, DataQualityError) as exc:
                 log.warning("exogenous series %s unavailable: %s", spec.name, exc)
                 metas[spec.name] = {"status": "UNAVAILABLE", "reason": str(exc)}

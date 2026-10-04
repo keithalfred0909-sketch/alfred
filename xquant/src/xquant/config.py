@@ -34,7 +34,9 @@ class MacroSeriesSpec(BaseModel):
     source: SourceSpec
     # Timezone of the series' date stamps (defaults to the asset timezone). Matters for intraday bars.
     timezone: str | None = None
-    frequency: Literal["daily", "monthly", "quarterly"]
+    # "bar": an intraday series stamped at its bar close (e.g. another Dukascopy instrument); usable from that
+    # timestamp (+ lag). The others are reference-period stamps.
+    frequency: Literal["daily", "monthly", "quarterly", "bar"]
     # Point-in-time availability. A value stamped at period P becomes usable only after this lag,
     # expressed against the *end* of P. Conservative defaults are preferred to optimistic ones.
     availability_lag_days: int = 0

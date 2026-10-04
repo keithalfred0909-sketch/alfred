@@ -163,3 +163,12 @@ def test_real_spike_and_reversal_with_ohlc_is_kept_but_unconfirmed_print_removed
     bad.iloc[t, bad.columns.get_loc("low")] = base * 0.9930
     bars2, rep2 = clean_bars(bad, tz="UTC", timeframe="1h")
     assert rep2.spikes_removed == 1
+
+
+def test_bar_frequency_exogenous_is_usable_from_its_own_close():
+    idx = pd.date_range("2024-01-02 10:00", periods=6, freq="1h", tz="UTC")
+    other = pd.Series([1.0, 2, 3, 4, 5, 6], index=idx.tz_localize(None), name="x")
+    out = align_point_in_time(other, idx, "bar", lag_days=0, tz="UTC")
+    assert list(out) == [1.0, 2, 3, 4, 5, 6]  # value stamped at bar close t is visible at t, never earlier
+    shifted = align_point_in_time(other, idx - pd.Timedelta(minutes=1), "bar", lag_days=0, tz="UTC")
+    assert shifted.iloc[0] != shifted.iloc[0] and list(shifted.iloc[1:]) == [1.0, 2, 3, 4, 5]
