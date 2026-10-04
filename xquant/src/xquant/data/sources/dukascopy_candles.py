@@ -82,8 +82,8 @@ class DukascopyCandleSource(DataSource):
     BASE = "https://datafeed.dukascopy.com/datafeed"
 
     def __init__(self, instrument: str, start: str, end: str, granularity: str = "hour", point: float = 1e-5,
-                 expected_range: list[float] | None = None, workers: int = 2, retries: int = 7,
-                 min_interval: float = 1.5,
+                 expected_range: list[float] | None = None, workers: int = 1, retries: int = 7,
+                 min_interval: float = 3.0,
                  fetch: FetchFn | None = None, cache_dir: Path | None = None, **extra: Any) -> None:
         super().__init__(instrument=instrument, start=start, end=end, granularity=granularity, point=point)
         if granularity not in GRANULARITY:
@@ -153,11 +153,12 @@ class DukascopyCandleSource(DataSource):
             except RateLimited as exc:  # the feed throttles bursts: back off and retry
                 if attempt == self.retries - 1:
                     raise
-                time.sleep(max(exc.retry_after or 0.0, 2.0 * 2 ** attempt))
+                # Observed behaviour: no Retry-After header, and ~12 s of penalty after a 429.
+                time.sleep(max(exc.retry_after or 0.0, 15.0 * (attempt + 1)))
             except DataUnavailableError:  # resets/aborted tunnels cluster when the feed throttles: wait longer
                 if attempt == self.retries - 1:
                     raise
-                time.sleep(3.0 * 2 ** attempt)
+                time.sleep(10.0 * (attempt + 1))
         return None
 
     def _pace(self) -> None:
