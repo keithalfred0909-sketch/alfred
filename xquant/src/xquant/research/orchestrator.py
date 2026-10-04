@@ -30,7 +30,7 @@ from xquant.data.engine import DataEngine, MarketDataset
 from xquant.errors import DataQualityError, DataUnavailableError, InsufficientDataError, XQuantError
 from xquant.evolution.engine import EvolutionEngine
 from xquant.features.discovery import FeatureDiscovery, FeaturePool
-from xquant.features.library import CATEGORICAL, assert_causal, build_primitives, evaluate
+from xquant.features.library import CATEGORICAL, assert_causal, build_primitives, evaluate, prim
 from xquant.findings import Finding
 from xquant.hypothesis.engine import Hypothesis, HypothesisEngine
 from xquant.logging_utils import get_logger
@@ -48,6 +48,22 @@ from xquant.validation.splits import DataSplits, SplitGuard, make_splits
 log = get_logger("research")
 
 LINES = ["hypothesis_seeded", "open_exploration", "regime_conditioned", "macro_conditioned"]
+
+
+def ensemble_vote(hyps: list[Hypothesis], prims: dict[str, pd.Series], exprs: dict[str, Any],
+                  regimes: pd.Series | None) -> pd.Series:
+    """Sum of +/-1 votes of validated hypotheses whose condition holds at each bar (causal: each condition
+    uses causal features and a threshold fixed on the discovery window)."""
+    idx = next(iter(prims.values())).index
+    vote = pd.Series(0.0, index=idx)
+    cache: dict[str, pd.Series] = {}
+    for h in hyps:
+        x = prims[h.feature] if h.feature in prims else evaluate(exprs[h.feature], prims, cache)
+        cond = h.condition(x)
+        if h.regime is not None and regimes is not None:
+            cond = cond & (regimes == h.regime)
+        vote = vote + cond.fillna(False).astype(float) * h.direction
+    return vote.rename("ensemble_vote")
 
 
 @dataclass
@@ -136,9 +152,12 @@ class ResearchOrchestrator:
 
     # ---- context ---------------------------------------------------------------------------------
     def _build_context(self, bars: pd.DataFrame, exog: pd.DataFrame, exprs: dict[str, Any] | None,
-                       regime_model: RegimeModel | None, ppy: float) -> EvalContext:
+                       regime_model: RegimeModel | None, ppy: float,
+                       ensemble: list[Hypothesis] | None = None) -> EvalContext:
         prims = build_primitives(bars, exog.reindex(bars.index) if not exog.empty else None, self.cfg.asset.timezone)
         regimes = regime_model.predict(bars["close"]) if regime_model else None
+        if ensemble:
+            prims["ensemble_vote"] = ensemble_vote(ensemble, prims, exprs or {}, regimes)
         return EvalContext(MarketArrays.from_bars(bars, ppy), prims, exprs or {}, self.cfg.asset.costs, regimes)
 
     # ---- main ------------------------------------------------------------------------------------
@@ -220,10 +239,18 @@ class ResearchOrchestrator:
         # 6. HYPOTHESES
         self._progress(phase="hypotheses")
         validated = self._hypotheses(ctx, pool, ds, splits, regimes, out)
+        ensemble = [h for h in validated if h.feature in pool.exprs and math.isfinite(h.threshold) and h.direction]
+        if len(ensemble) >= 2:
+            # Combine weak validated effects into one signed vote (thresholds fixed on the discovery window).
+            ctx.prims["ensemble_vote"] = ensemble_vote(ensemble, ctx.prims, pool.exprs, ctx.regimes)
+            pool.exprs["ensemble_vote"] = prim("ensemble_vote")
+            self._say(f"ensemble_vote built from {len(ensemble)} validated hypotheses")
+        else:
+            ensemble = []
 
         # 7. EVOLUTION LINES + ADVERSARIAL
         rebuild = lambda bars: self._build_context(bars, ds.exog, pool.exprs, regime_model,  # noqa: E731
-                                                   ppy * len(bars) / len(ds.bars))
+                                                   ppy * len(bars) / len(ds.bars), ensemble)
         adv = AdversarialEngine(ctx, splits, self.guard, cfg.robustness, rebuild, ds.bars, cfg.asset.timezone,
                                 cfg.stats.min_trades, np.random.default_rng(cfg.research.seed + 1),
                                 min_trades_per_day=cfg.stats.min_trades_per_day)
