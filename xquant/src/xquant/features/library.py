@@ -66,6 +66,8 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
     if local.hour.nunique() > 1:
         P["hour"] = pd.Series(local.hour.astype(float), index=bars.index)
         P.update(session_features(bars, local, vol[20]))
+        if bars["volume"].fillna(0).gt(0).mean() > 0.5:
+            P.update(weekly_vwap_features(bars, local, vol[20]))
         if len(bars) > 2 and pd.to_timedelta(pd.Series(bars.index).diff().median()) <= pd.Timedelta("30min"):
             P.update(intraday_momentum_features(c, local))
     if bars[["open", "high", "low"]].notna().all(axis=None):
@@ -167,6 +169,42 @@ def session_features(bars: pd.DataFrame, local: pd.DatetimeIndex, vol: pd.Series
     return {k: s.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, s in out.items()}
 
 
+def weekly_vwap_features(bars: pd.DataFrame, local: pd.DatetimeIndex, vol: pd.Series,
+                         roll: str = "17:00") -> dict[str, pd.Series]:
+    """Weekly VWAP anchored at the week open (Sunday ``roll`` New York = start of Monday's session).
+
+    Typical price (H+L+C)/3 weighted by the bar's volume (Dukascopy: TICK volume, a proxy - not exchange
+    volume), cumulated over the current week up to and including bar t (closed at t, so known at t).
+    Bands use the volume-weighted standard deviation of typical price around the VWAP.
+    * ``wvwap_z``: (close - VWAP) / band sigma;  ``wvwap_band`` (categorical): -2 (<= -2 sigma), -1, 0, 1, 2 (>= 2 sigma)
+    * ``wvwap_dist``: log(close / VWAP) in units of bar volatility;  ``wvwap_slope``: 5-bar change of the
+      weekly VWAP (within the week) in units of bar volatility
+    * ``pwvwap_dist``: distance to the previous week's final VWAP;  ``week_bar``: bars since the week open
+    """
+    c = bars["close"]
+    hi, lo = bars["high"].fillna(c), bars["low"].fillna(c)
+    v = bars["volume"].fillna(0.0).clip(lower=0.0)
+    tp = (hi + lo + c) / 3
+    naive = local.tz_localize(None)
+    sess_end = (naive - pd.Timedelta(roll + ":00") - pd.Timedelta(seconds=1)).floor("D") + pd.Timedelta(days=1)
+    iso = pd.DatetimeIndex(sess_end).isocalendar()
+    key = (iso["year"] * 100 + iso["week"]).to_numpy()
+    g = lambda s: s.groupby(key)  # noqa: E731
+    cv = g(v).cumsum().replace(0, np.nan)
+    vwap = g(tp * v).cumsum() / cv
+    sd = np.sqrt((g(tp * tp * v).cumsum() / cv - vwap ** 2).clip(lower=0.0))
+    z = (c - vwap) / sd.replace(0, np.nan)
+    vv = vol.replace(0, np.nan)
+    out: dict[str, pd.Series] = {"wvwap_z": z, "wvwap_dist": np.log(c / vwap) / vv,
+                                 "wvwap_slope": g(np.log(vwap)).diff(5) / vv, "week_bar": g(c).cumcount().astype(float)}
+    band = np.select([z <= -2, z <= -1, z < 1, z < 2], [-2.0, -1.0, 0.0, 1.0], 2.0)
+    out["wvwap_band"] = pd.Series(np.where(z.notna(), band, np.nan), index=c.index)
+    final = pd.Series(vwap.to_numpy(), index=key).groupby(level=0).last()
+    prev = final.shift(1)  # previous COMPLETED week
+    out["pwvwap_dist"] = np.log(c / pd.Series(key, index=c.index).map(prev).astype(float)) / vv
+    return {k: s.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, s in out.items()}
+
+
 def intraday_momentum_features(close: pd.Series, local: pd.DatetimeIndex, open_hm: int = 600,
                                close_hm: int = 960, max_gap_days: int = 4) -> dict[str, pd.Series]:
     """US cash-session structure for sub-hourly bars stamped at their close (New York time).
@@ -213,7 +251,7 @@ def _streak(r: pd.Series) -> pd.Series:
     return pd.Series(out, index=r.index)
 
 
-CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar", "tod", "im_open_sign"}
+CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar", "tod", "im_open_sign", "wvwap_band"}
 _CATEGORICAL_PATTERN = re.compile(r"_smt\d+$")
 
 

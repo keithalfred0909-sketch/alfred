@@ -191,3 +191,32 @@ def test_hold_zero_exits_at_close_of_entry_bar():
     t = res.trades.iloc[0]
     assert t["entry_i"] == 2 and t["exit_i"] == 2  # in at the open of bar 2, out at its close
     assert t["gross"] == pytest.approx(np.log(102.0 / 101.5))
+
+
+def test_weekly_vwap_is_causal_and_matches_manual_computation():
+    rng = np.random.default_rng(21)
+    idx = pd.date_range("2024-02-26 00:00", periods=24 * 21, freq="1h", tz="America/New_York").tz_convert("UTC")
+    c = 18000 * np.exp(np.cumsum(rng.normal(0, 0.002, len(idx))))
+    o = np.r_[c[0], c[:-1]]
+    vol = rng.integers(50, 500, len(idx)).astype(float)
+    bars = pd.DataFrame({"open": o, "high": np.maximum(o, c) * 1.001, "low": np.minimum(o, c) * 0.999,
+                         "close": c, "volume": vol}, index=idx)
+    P = build_primitives(bars, None, "America/New_York")
+    names = ["wvwap_z", "wvwap_band", "wvwap_dist", "wvwap_slope", "pwvwap_dist", "week_bar"]
+    for name in names:
+        assert name in P and P[name].notna().sum() > 100, name
+        assert_causal(lambda b, n=name: build_primitives(b, None, "America/New_York")[n], bars, [150, 333, 480], name)
+    loc = idx.tz_convert("America/New_York")
+    # week opened Sunday 2024-03-03 17:00 NY (bars closing after it); check Tuesday 2024-03-05 12:00
+    t = pd.Timestamp("2024-03-05 12:00", tz="America/New_York")
+    wk = (loc > pd.Timestamp("2024-03-03 17:00", tz="America/New_York")) & (loc <= t)
+    tp = ((bars["high"] + bars["low"] + bars["close"]) / 3)[wk]
+    w = bars["volume"][wk]
+    vwap = (tp * w).sum() / w.sum()
+    sd = np.sqrt((w * (tp - vwap) ** 2).sum() / w.sum())
+    i = np.flatnonzero(loc == t)[0]
+    assert P["wvwap_z"].iloc[i] == pytest.approx((c[i] - vwap) / sd)
+    assert P["week_bar"].iloc[i] == wk.sum() - 1
+    assert set(P["wvwap_band"].dropna().unique()) <= {-2.0, -1.0, 0.0, 1.0, 2.0}
+    z, band = P["wvwap_z"], P["wvwap_band"]
+    assert (band[z <= -2] == -2).all() and (band[(z > -1) & (z < 1)] == 0).all()
