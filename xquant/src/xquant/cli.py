@@ -82,6 +82,26 @@ def cmd_confirm(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_allocate(args: argparse.Namespace) -> int:
+    from xquant.allocation.study import AllocationStudy, load_spec, write_report
+    from xquant.dashboard.render import render_dashboard
+    from xquant.memory.store import ResearchMemory
+    cfg = load_config("EURUSD", _overrides(args))
+    setup_logging(args.log_level, PROJECT_ROOT / cfg.research.runs_dir / "xquant.log.jsonl")
+    mem = ResearchMemory(cfg.research.memory_path)
+    out = AllocationStudy(load_spec(args.spec), mem, offline=args.offline).run()
+    md, js = write_report(out)
+    mem.update_run(out["run_id"], report_path=str(md.relative_to(PROJECT_ROOT)))
+    render_dashboard(mem)
+    for r in out["results"]:
+        p = r["primary"]
+        print(f"{r['variant']}: {r['status']} | primary Sharpe {p.get('sharpe', float('nan')):.2f} "
+              f"(gross {r['gross_primary_sharpe']:.2f}), CAGR {p.get('ann_return', float('nan')):.2%}, "
+              f"max DD {p.get('max_drawdown', float('nan')):.2%} | checks {r['checks']}")
+    print(f"\n{out['verdict']}\nreport: {md}")
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -156,6 +176,11 @@ def main(argv: list[str] | None = None) -> int:
     cf.add_argument("--offline", action="store_true", help="use cached/snapshotted data only")
     cf.add_argument("--memory", help="research memory path")
     cf.set_defaults(fn=cmd_confirm)
+    al = sub.add_parser("allocate", help="run a pre-registered allocation (portfolio / sizing) study once")
+    al.add_argument("--spec", required=True, help="allocation pre-registration YAML")
+    al.add_argument("--offline", action="store_true", help="use cached data only")
+    al.add_argument("--memory", help="research memory path")
+    al.set_defaults(fn=cmd_allocate)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")
