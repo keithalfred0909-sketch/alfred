@@ -244,6 +244,26 @@ class ResearchMemory:
         n, s, s2 = r["n"], r["sum_sr"], r["sum_sr2"]
         return int(n), float(max(s2 / n - (s / n) ** 2, 0.0))
 
+    # ---- maintenance -----------------------------------------------------------------------------
+    def compact(self, max_points: int = 400) -> dict[str, int]:
+        """Downsample stored equity curves to ``max_points`` and VACUUM. Verdicts and metrics untouched."""
+        changed = 0
+        rows = self.conn.execute("SELECT id, dossier FROM strategies").fetchall()
+        with self.tx() as c:
+            for r in rows:
+                d = json.loads(r["dossier"] or "{}")
+                eq = d.get("equity") or {}
+                n = len(eq.get("combined") or [])
+                if n > max_points:
+                    step = n // max_points
+                    d["equity"] = {k: v[::step] for k, v in eq.items()}
+                    c.execute("UPDATE strategies SET dossier=? WHERE id=?", (_j(d), r["id"]))
+                    changed += 1
+        before = self.path.stat().st_size
+        self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        self.conn.execute("VACUUM")
+        return {"strategies_downsampled": changed, "bytes_before": before, "bytes_after": self.path.stat().st_size}
+
     # ---- queries for dashboard / CLI ---------------------------------------------------------------
     def query(self, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         return [dict(r) for r in self.conn.execute(sql, params).fetchall()]

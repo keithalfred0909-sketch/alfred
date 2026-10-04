@@ -201,5 +201,5 @@ def write_report(o: ResearchOutcome, out_dir: Path | None = None) -> tuple[Path,
     md = out_dir / f"{o.run_id}_{o.asset}.md"
     js = out_dir / f"{o.run_id}_{o.asset}.json"
     md.write_text(build_markdown(o), encoding="utf-8")
-    js.write_text(json.dumps(o.__dict__, default=str, indent=1), encoding="utf-8")
+    js.write_text(json.dumps(o.__dict__, default=str, separators=(",", ":")), encoding="utf-8")
     return md, js

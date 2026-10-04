@@ -30,6 +30,7 @@ from xquant.validation.splits import DataSplits, SplitGuard
 # an older battery is re-examined instead of reusing its verdict (a corrected test is a new scientific reason).
 # v2: entry displacement uses delays (+1, +2) only.
 ATTACK_SUITE_VERSION = 2
+EQUITY_POINTS = 400
 
 
 @dataclass
@@ -212,8 +213,10 @@ class AdversarialEngine:
         d.overfit["is_oos_degradation"] = (vm.sharpe / tr_res.metrics.sharpe) if tr_res.metrics.sharpe > 0 else None
 
         self._verdict(d)
-        d.equity["combined"] = [float(x) for x in np.cumsum(cb_res.returns.to_numpy())[::5]]
-        d.equity["dates"] = [str(t.date()) for t in cb_res.returns.index[::5]]
+        eq = np.cumsum(cb_res.returns.to_numpy())
+        step = max(1, len(eq) // EQUITY_POINTS)  # enough to draw the curve; keeps memory/report small
+        d.equity["combined"] = [round(float(x), 6) for x in eq[::step]]
+        d.equity["dates"] = [str(t.date()) for t in cb_res.returns.index[::step]]
         return d
 
     @staticmethod

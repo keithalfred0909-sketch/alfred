@@ -91,3 +91,15 @@ def test_unexpected_failure_marks_run_failed(tmp_path, monkeypatch):
         ResearchOrchestrator(cfg, memory=mem, dataset=ds).run()
     run = mem.query("SELECT status, summary FROM research_runs")[0]
     assert run["status"] == "FAILED" and "simulated crash" in run["summary"]
+
+
+def test_memory_compact_downsamples_equity_and_keeps_verdicts(tmp_path):
+    mem = ResearchMemory(tmp_path / "m.db")
+    dossier = {"genome_signature": "abc", "status": "REJECTED", "reasons": ["x"], "description": "d", "genome": {},
+               "score": 1.0, "equity": {"combined": list(range(5000)), "dates": [str(i) for i in range(5000)]}}
+    sid = mem.record_strategy("RUN-1", "EXP-1", "SYN", "v1", dossier)
+    out = mem.compact(max_points=400)
+    assert out["strategies_downsampled"] == 1
+    stored = mem.known_strategy("abc", "SYN", "v1")
+    assert stored["id"] == sid and stored["status"] == "REJECTED"
+    assert 400 <= len(stored["dossier"]["equity"]["combined"]) <= 420

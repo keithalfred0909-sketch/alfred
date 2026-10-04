@@ -72,6 +72,18 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 def cmd_memory(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     mem = ResearchMemory(args.memory or "research_output/memory.db")
+    if args.what == "compact":
+        print(json.dumps(mem.compact()))
+        for p in sorted((PROJECT_ROOT / "research_output" / "reports").glob("*.json")):
+            data = json.loads(p.read_text())
+            for key in ("dossiers", "ranking"):
+                for d in data.get(key, []):
+                    eq = d.get("equity") or {}
+                    n = len(eq.get("combined") or [])
+                    if n > 400:
+                        d["equity"] = {k: v[:: n // 400] for k, v in eq.items()}
+            p.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+        return 0
     q = {"runs": "SELECT id, asset, mode, status, verdict, started_at FROM research_runs ORDER BY started_at DESC",
          "experiments": "SELECT id, run_id, kind, line, status, conclusion FROM experiments ORDER BY id DESC",
          "hypotheses": "SELECT id, status, round(p_value, 6) AS p, round(q_value, 4) AS q, sample, description FROM hypotheses "
@@ -110,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     db.add_argument("--memory")
     db.set_defaults(fn=cmd_dashboard)
     m = sub.add_parser("memory", help="inspect research memory")
-    m.add_argument("what", choices=["runs", "experiments", "hypotheses", "strategies"])
+    m.add_argument("what", choices=["runs", "experiments", "hypotheses", "strategies", "compact"])
     m.add_argument("--limit", type=int, default=20)
     m.add_argument("--memory")
     m.set_defaults(fn=cmd_memory)
