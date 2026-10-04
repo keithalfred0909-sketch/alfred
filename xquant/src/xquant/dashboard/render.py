@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from xquant.config import PROJECT_ROOT
-from xquant.memory.store import ResearchMemory
+from xquant.memory.store import ResearchMemory, unpack
 
 CSS = """
 :root{color-scheme:light;--page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
@@ -128,7 +128,7 @@ def build_html(mem: ResearchMemory, refresh: int | None = None) -> str:
     logs = mem.query("SELECT at, level, message FROM log ORDER BY id DESC LIMIT 60")
     exps = mem.query("SELECT id, kind, line, status, conclusion, created_at FROM experiments ORDER BY id DESC LIMIT 15")
     data: dict[str, Any] = {}
-    best = json.loads(strategies[0]["dossier"]) if strategies else None
+    best = unpack(strategies[0]["dossier"], {}) if strategies else None
     if best and best.get("equity", {}).get("combined"):
         data["equity"] = {"dates": best["equity"]["dates"], "values": best["equity"]["combined"]}
     fails = rep.get("failure_summary", {})
@@ -167,7 +167,7 @@ def build_html(mem: ResearchMemory, refresh: int | None = None) -> str:
              + '<div id="eq" class="chart"></div></div><div class="card"><h2>Drawdown</h2><div id="dd" class="chart"></div></div></section>')
     rows = []
     for s in strategies:
-        d = json.loads(s["dossier"])
+        d = unpack(s["dossier"], {})
         v, t, f = d.get("validation", {}), d.get("test", {}), d.get("final", {})
         rows.append(f"<tr><td>{_e(s['id'])}</td><td>{_badge(s['status'])}</td><td>{_e(s['description'])}</td>"
                     f"<td class='num'>{_num(s['score'])}</td><td class='num'>{_num(v.get('sharpe'))}</td><td class='num'>{_num(v.get('sortino'))}</td>"

@@ -15,6 +15,7 @@ import json
 import math
 import sqlite3
 import subprocess
+import zlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -89,6 +90,20 @@ def _j(x: Any) -> str:
             return [clean(w) for w in v]
         return v
     return json.dumps(clean(x), default=default)
+
+
+def pack(x: Any) -> bytes:
+    """Compressed JSON for large blobs (hypothesis data, dossiers, findings)."""
+    return zlib.compress(_j(x).encode(), 6)
+
+
+def unpack(raw: Any, default: Any = None) -> Any:
+    """Read a blob written by ``pack`` or a legacy plain-JSON text value."""
+    if raw is None:
+        return default
+    if isinstance(raw, bytes | memoryview):
+        return json.loads(zlib.decompress(bytes(raw)).decode())
+    return json.loads(raw) if raw else default
 
 
 class ResearchMemory:
@@ -170,13 +185,13 @@ class ResearchMemory:
         with self.tx() as c:
             c.executemany("INSERT INTO findings(run_id, experiment_id, asset, dataset_version, engine, category, name,"
                           " status, data, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                          [(run_id, exp_id, asset, dv, f["engine"], f["category"], f["name"], f["status"], _j(f), now())
+                          [(run_id, exp_id, asset, dv, f["engine"], f["category"], f["name"], f["status"], pack(f), now())
                            for f in findings])
 
     def known_hypotheses(self, asset: str, dv: str) -> dict[str, dict[str, Any]]:
         rows = self.conn.execute("SELECT signature, id, status, data FROM hypotheses WHERE asset=? AND dataset_version=?",
                                  (asset, dv)).fetchall()
-        return {r["signature"]: {"id": r["id"], "status": r["status"], "data": json.loads(r["data"])} for r in rows}
+        return {r["signature"]: {"id": r["id"], "status": r["status"], "data": unpack(r["data"], {})} for r in rows}
 
     def record_hypotheses(self, asset: str, dv: str, exp_id: str, hyps: list[dict[str, Any]]) -> list[str]:
         ids = []
@@ -195,7 +210,7 @@ class ResearchMemory:
                            _j({"feature": h["feature"], "side": h["side"], "q": h["q"], "horizon": h["horizon"],
                                "regime": h["regime"]}), h["period"], h["sample"], h["baseline"], h["result"],
                            h["p_value"], h["q_value"], h["effect_size"], h["confidence"], h["complexity"], h["status"],
-                           _j(h), now()))
+                           pack(h), now()))
                 ids.append(hid)
         return ids
 
@@ -209,7 +224,7 @@ class ResearchMemory:
         if not r:
             return None
         return {"id": r["id"], "status": r["status"], "reasons": json.loads(r["reasons"] or "[]"), "score": r["score"],
-                "dossier": json.loads(r["dossier"] or "{}")}
+                "dossier": unpack(r["dossier"], {})}
 
     def record_strategy(self, run_id: str, exp_id: str, asset: str, dv: str, dossier: dict[str, Any]) -> str:
         sig = dossier["genome_signature"]
@@ -217,14 +232,14 @@ class ResearchMemory:
         with self.tx() as c:
             if existing:
                 c.execute("UPDATE strategies SET status=?, reasons=?, score=?, dossier=? WHERE id=?",
-                          (dossier["status"], _j(dossier["reasons"]), dossier.get("score"), _j(dossier), existing["id"]))
+                          (dossier["status"], _j(dossier["reasons"]), dossier.get("score"), pack(dossier), existing["id"]))
                 return str(existing["id"])
             v = c.execute("INSERT INTO counters(name, value) VALUES ('STR', 1) ON CONFLICT(name) DO UPDATE "
                           "SET value = value + 1 RETURNING value").fetchone()[0]
             sid = f"STR-{v:06d}"
             c.execute("INSERT INTO strategies VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                       (sid, sig, asset, dv, exp_id, run_id, dossier["description"], _j(dossier["genome"]),
-                       dossier["status"], _j(dossier["reasons"]), dossier.get("score"), _j(dossier), now()))
+                       dossier["status"], _j(dossier["reasons"]), dossier.get("score"), pack(dossier), now()))
         return sid
 
     # ---- trials ----------------------------------------------------------------------------------
@@ -246,20 +261,22 @@ class ResearchMemory:
 
     # ---- maintenance -----------------------------------------------------------------------------
     def compact(self, max_points: int = 400) -> dict[str, int]:
-        """Downsample stored equity curves to ``max_points`` and VACUUM. Verdicts and metrics untouched."""
+        """Downsample stored equity curves, compress every JSON blob (legacy rows included) and VACUUM.
+        Verdicts, metrics and statistics are untouched."""
         changed = 0
-        rows = self.conn.execute("SELECT id, dossier FROM strategies").fetchall()
+        before = self.path.stat().st_size
         with self.tx() as c:
-            for r in rows:
-                d = json.loads(r["dossier"] or "{}")
+            for r in c.execute("SELECT id, dossier FROM strategies").fetchall():
+                d = unpack(r["dossier"], {})
                 eq = d.get("equity") or {}
-                n = len(eq.get("combined") or [])
-                step = n // max_points
+                step = len(eq.get("combined") or []) // max_points
                 if step > 1:
                     d["equity"] = {k: v[::step] for k, v in eq.items()}
-                    c.execute("UPDATE strategies SET dossier=? WHERE id=?", (_j(d), r["id"]))
                     changed += 1
-        before = self.path.stat().st_size
+                c.execute("UPDATE strategies SET dossier=? WHERE id=?", (pack(d), r["id"]))
+            for table, key in (("hypotheses", "id"), ("findings", "id")):
+                for r in c.execute(f"SELECT {key}, data FROM {table} WHERE typeof(data) = 'text'").fetchall():
+                    c.execute(f"UPDATE {table} SET data=? WHERE {key}=?", (pack(unpack(r["data"], {})), r[key]))
         self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         self.conn.execute("VACUUM")
         return {"strategies_downsampled": changed, "bytes_before": before, "bytes_after": self.path.stat().st_size}
