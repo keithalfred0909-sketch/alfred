@@ -1,5 +1,7 @@
 # Nasdaq 100 CFD (Dukascopy USATECHIDXUSD) 1-minute BID+ASK candles, 2017-2026. Base dataset for NAS100_M30.
 # Same caveats as NAS100_H1: proxy for NQ futures, tick volume only (no order flow), no independent cross-check.
+# BID candles only (no ASK download): the studies on this data charge fixed NQ-futures-like costs, so the
+# bid-ask spread is not needed; prices are bids (shifted by half a spread vs mid), spread column empty.
 asset:
   costs:
     spread_bps: 1.5
@@ -74,6 +76,8 @@ asset:
       expected_range:
       - 1500
       - 40000
+      sides:
+      - BID
   splits:
     train_end: '2020-12-31'
     validation_end: '2022-12-31'

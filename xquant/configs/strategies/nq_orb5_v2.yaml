@@ -1,10 +1,10 @@
-# SUPERSEDED by nq_orb5_v2 BEFORE any evaluation (only the data line changed: BID-only candles). Never run.
 # STRATEGY PRE-REGISTRATION (10-point specification) - do not edit after evaluation; the lab stores the SHA-256.
-# Built from scratch with the user (market NQ/Nasdaq M5, risk 1% per trade, 2% per day).
-name: nq_orb5_v1
+# Built from scratch with the user (market NQ/Nasdaq M5, risk 1% per trade, 2% per day). Supersedes v1 (data line only).
+name: nq_orb5_v2
 market: NAS100 (Dukascopy USATECHIDXUSD CFD, proxy for NQ futures), 1-minute bars aggregated as needed
-registered_by: X-QUANT with the user, 2026-10-04 - written before any NAS100 minute data outcome was computed (download
-  still running)
+registered_by: 'X-QUANT with the user, 2026-10-04 - written before any NAS100 minute data outcome was computed (download
+  still running); v2 = v1 with BID-only candles (user: do not download unnecessary data), still before any outcome
+  was computed'
 inspiration: 5-minute opening-range breakout studied on the Nasdaq-100 ETF in recent SSRN work (Zarattini, Barbon
   & Aziz, 2023). The rules below are this lab's own fixed specification, not a reproduction of that paper; its sample
   (to 2023) overlaps 2017-2023 here, so only data after mid-2024 (FINAL split) is post-publication.
@@ -28,7 +28,7 @@ inspiration: 5-minute opening-range breakout studied on the Nasdaq-100 ETF in re
 8_edge: 'Measured in R per trade net of costs (NQ-futures-like: ~0.435 bps per fill = half spread 0.125 + commission
   0.06 + slippage 0.25), and as daily returns at 1% risk.'
 9_backtest:
-  data: Dukascopy 1-minute BID+ASK mid, 2017-01 to 2026-09
+  data: 'Dukascopy 1-minute BID candles (no ASK: costs are fixed, the spread is not used), 2017-01 to 2026-09'
   splits:
     train_end: '2020-12-31'
     validation_end: '2022-12-31'

@@ -83,12 +83,17 @@ class DukascopyCandleSource(DataSource):
 
     def __init__(self, instrument: str, start: str, end: str, granularity: str = "hour", point: float = 1e-5,
                  expected_range: list[float] | None = None, workers: int = 1, retries: int = 7,
-                 min_interval: float = 1.0,
+                 min_interval: float = 1.0, sides: list[str] | None = None,
                  fetch: FetchFn | None = None, cache_dir: Path | None = None, **extra: Any) -> None:
         super().__init__(instrument=instrument, start=start, end=end, granularity=granularity, point=point)
         if granularity not in GRANULARITY:
             raise ConfigError(f"granularity must be one of {sorted(GRANULARITY)}")
         self.instrument, self.point, self.granularity = instrument.upper(), point, granularity
+        # sides=["BID"]: download only BID candles (half the requests) when the bid-ask spread is not needed,
+        # e.g. studies that charge fixed costs. Prices are then BID, not mid; the spread column is NaN.
+        self.sides = [s.upper() for s in (sides or ["BID", "ASK"])]
+        if self.sides not in (["BID", "ASK"], ["BID"]):
+            raise ConfigError("sides must be ['BID', 'ASK'] (mid prices) or ['BID']")
         self.start, self.end = pd.Timestamp(start, tz="UTC"), pd.Timestamp(end, tz="UTC")
         self.expected_range = (float(expected_range[0]), float(expected_range[1])) if expected_range else None
         self.workers, self.retries = workers, retries
@@ -223,26 +228,35 @@ class DukascopyCandleSource(DataSource):
             raise DataUnavailableError(f"Dukascopy datafeed unreachable ({exc}). If this is a 403 from the proxy, "
                                        "add datafeed.dukascopy.com to the environment's allowed domains.") from exc
         t0 = time.time()
-        bid, ask = self._side("BID", periods), self._side("ASK", periods)
+        bid = self._side("BID", periods)
         if bid.empty:
             raise DataUnavailableError(f"no Dukascopy candles for {self.instrument} {self.start}..{self.end}")
-        both = bid.join(ask, lsuffix="_bid", rsuffix="_ask", how="inner")
-        live = (both["volume_bid"] > 0) | (both["volume_ask"] > 0)
-        flat = int((~live).sum())
-        both = both[live]
-        both = both[(both.index >= self.start) & (both.index < self.end)]
-        mid = pd.DataFrame({c: (both[f"{c}_bid"] + both[f"{c}_ask"]) / 2 for c in ["open", "high", "low", "close"]})
-        mid["volume"] = both["volume_bid"]
-        mid["spread"] = ((both["open_ask"] - both["open_bid"]) + (both["close_ask"] - both["close_bid"])) / 2
-        neg = int((mid["spread"] < 0).sum())
-        if neg > 0.001 * len(mid):
-            raise DataQualityError(f"{neg} bars with ask < bid: BID/ASK files inconsistent")
+        if self.sides == ["BID"]:
+            live = bid["volume"] > 0
+            flat = int((~live).sum())
+            mid = bid[live]
+            mid = mid[(mid.index >= self.start) & (mid.index < self.end)].copy()
+            mid["spread"] = np.nan
+            self.provenance["prices"] = "BID only (no ASK downloaded): prices are bids, spread unknown"
+        else:
+            ask = self._side("ASK", periods)
+            both = bid.join(ask, lsuffix="_bid", rsuffix="_ask", how="inner")
+            live = (both["volume_bid"] > 0) | (both["volume_ask"] > 0)
+            flat = int((~live).sum())
+            both = both[live]
+            both = both[(both.index >= self.start) & (both.index < self.end)]
+            mid = pd.DataFrame({c: (both[f"{c}_bid"] + both[f"{c}_ask"]) / 2 for c in ["open", "high", "low", "close"]})
+            mid["volume"] = both["volume_bid"]
+            mid["spread"] = ((both["open_ask"] - both["open_bid"]) + (both["close_ask"] - both["close_bid"])) / 2
+            neg = int((mid["spread"] < 0).sum())
+            if neg > 0.001 * len(mid):
+                raise DataQualityError(f"{neg} bars with ask < bid: BID/ASK files inconsistent")
         mid.index = mid.index + GRANULARITY[self.granularity][1]  # stamp at bar close (decision time)
         mid.index.name = "timestamp"
         self.provenance.update({"bars": int(len(mid)), "flat_zero_volume_dropped": flat,
                                 "spread_median": float(mid["spread"].median()),
                                 "volume": "Dukascopy tick volume (not exchange volume)",
                                 "seconds": round(time.time() - t0, 1), "field_order": "open,close,low,high (verified by checks)"})
-        log.info("Dukascopy %s %s: %d bars, %d flat filler candles dropped, median spread %.6f",
-                 self.instrument, self.granularity, len(mid), flat, mid["spread"].median())
+        log.info("Dukascopy %s %s (%s): %d bars, %d flat filler candles dropped",
+                 self.instrument, self.granularity, "+".join(self.sides), len(mid), flat)
         return mid

@@ -213,3 +213,22 @@ def test_hour_aggregation_h4_aligned_to_17h_new_york():
     b = out.loc[pd.Timestamp("2024-01-09 22:00", tz="UTC")]  # 17:00 NY close: hourly closes 18:00..22:00 UTC
     sel = bars[(bars.index > pd.Timestamp("2024-01-09 18:00", tz="UTC")) & (bars.index <= pd.Timestamp("2024-01-09 22:00", tz="UTC"))]
     assert b["open"] == sel["open"].iloc[0] and b["close"] == sel["close"].iloc[-1] and b["high"] == sel["high"].max()
+
+
+def test_bid_only_mode_skips_ask_downloads(tmp_path):
+    calls = []
+    blob = _blob(_hourly_rows(24 * 31))
+
+    def fetch(url):
+        calls.append(url)
+        if "/2023/00/BID" in url:
+            return blob
+        raise DataNotFound(url)
+
+    src = DukascopyCandleSource("EURUSD", "2023-01-01", "2023-02-01", point=1e-5, min_interval=0, fetch=fetch,
+                                cache_dir=tmp_path, sides=["BID"])
+    bars = src.fetch_series()
+    assert len(bars) > 600 and bars["spread"].isna().all()
+    assert not any("ASK" in u for u in calls)
+    with pytest.raises(Exception, match="sides"):
+        DukascopyCandleSource("EURUSD", "2023-01-01", "2023-02-01", sides=["ASK"])
