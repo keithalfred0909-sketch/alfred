@@ -29,6 +29,9 @@ def _overrides(args: argparse.Namespace) -> dict[str, Any]:
         o["research"]["seed"] = args.seed
     if getattr(args, "memory", None):
         o["research"]["memory_path"] = args.memory
+    if getattr(args, "max_minutes", None):
+        mode = getattr(args, "mode", None) or "standard"
+        o["budgets"] = {mode: {"max_compute_minutes": args.max_minutes}}
     return o
 
 
@@ -115,6 +118,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--seed", type=int)
     r.add_argument("--memory")
     r.add_argument("--offline", action="store_true")
+    r.add_argument("--max-minutes", type=float, help="override the mode's compute budget (stops gracefully)")
     r.set_defaults(fn=cmd_research)
     db = sub.add_parser("dashboard", help="render or serve the dashboard")
     db.add_argument("--serve", action="store_true")
