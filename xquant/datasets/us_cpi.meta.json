@@ -2,7 +2,7 @@
   "url": "https://raw.githubusercontent.com/datasets/cpi-us/main/data/cpiai.csv",
   "raw_sha256": "f124bd596ebebc15bcdeb0a6445af0e2c48120325852f9b6a87744ea92acfe86",
   "rows": 1363,
-  "downloaded_at": "2026-10-04T08:37:21+00:00",
+  "downloaded_at": "2026-10-04T11:42:24+00:00",
   "filter": null,
   "snapshot_sha256": "b5c4ef394ed15981c1d31176c23f4e5494aa79ad5690bb59809fb2fde48e9a74"
 }
