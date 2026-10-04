@@ -112,7 +112,11 @@ def clean_bars(raw: pd.DataFrame, tz: str, timeframe: str, close_time: str | Non
 def _remove_spikes(df: pd.DataFrame, rep: QualityReport, k: float) -> tuple[pd.DataFrame, QualityReport]:
     """Remove isolated bad prints: a jump of > k robust sigmas that is fully reversed on the next bar
     (price returns to within 1 robust sigma of the previous close). Genuine large moves that do not
-    revert are kept and only counted."""
+    revert are kept and only counted.
+
+    With OHLC data a spike-and-reversal is often REAL (e.g. the NFP release bar followed by a full
+    reversal): if the next bar OPENS at the spiked close, the market traded there and the bar is kept.
+    Only a close that the next open does not confirm is treated as a bad print."""
     r = np.log(df["close"]).diff()
     mad = (r - r.rolling(250, min_periods=50).median()).abs().rolling(250, min_periods=50).median()
     sigma = (1.4826 * mad).shift(1)
@@ -123,6 +127,10 @@ def _remove_spikes(df: pd.DataFrame, rep: QualityReport, k: float) -> tuple[pd.D
     after = df["close"].shift(-1)
     back = pd.Series(np.log(after / prev_close), index=df.index).abs() < sigma
     spike = big & (np.sign(nxt) == -np.sign(r)) & (nxt.abs() > 0.8 * r.abs()) & back
+    if df[["open", "high", "low"]].notna().all(axis=None):
+        next_open = df["open"].shift(-1)
+        confirmed = pd.Series(np.log(next_open / df["close"]), index=df.index).abs() < sigma
+        spike = spike & ~confirmed.fillna(False)
     if spike.any():
         rep.spikes_removed = int(spike.sum())
         rep.extreme_moves_kept -= rep.spikes_removed

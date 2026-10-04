@@ -140,3 +140,26 @@ def test_splits_and_guard():
     g.request("final", "evaluate", "t")
     with pytest.raises(SplitAccessError):
         g.request("final", "evaluate", "t")
+
+
+def test_real_spike_and_reversal_with_ohlc_is_kept_but_unconfirmed_print_removed():
+    """Real data shape of EUR/USD on NFP day 2007-10-05: a ~70 pip drop fully reversed next hour."""
+    rng = np.random.default_rng(3)
+    n = 600
+    close = 1.41 * np.exp(np.cumsum(rng.normal(0, 0.0004, n)))
+    open_ = np.r_[close[0], close[:-1]]
+    high, low = np.maximum(open_, close) * 1.0002, np.minimum(open_, close) * 0.9998
+    idx = pd.date_range("2007-09-01", periods=n, freq="1h")
+    t = 400
+    base = close[t - 1]
+    close[t], low[t], high[t] = base * 0.9951, base * 0.9930, base * 1.0005  # NFP drop
+    open_[t + 1], low[t + 1] = close[t], close[t] * 0.9998                  # next bar opens there...
+    close[t + 1], high[t + 1] = base * 1.0003, base * 1.0010                # ...and reverses fully
+    raw = pd.DataFrame({"open": open_, "high": high, "low": low, "close": close, "volume": 1.0}, index=idx)
+    bars, rep = clean_bars(raw, tz="UTC", timeframe="1h")
+    assert rep.spikes_removed == 0 and len(bars) == n  # real market move kept
+    bad = raw.copy()
+    bad.iloc[t + 1, bad.columns.get_loc("open")] = base  # next open does NOT confirm the low close
+    bad.iloc[t, bad.columns.get_loc("low")] = base * 0.9930
+    bars2, rep2 = clean_bars(bad, tz="UTC", timeframe="1h")
+    assert rep2.spikes_removed == 1
