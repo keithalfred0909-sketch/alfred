@@ -24,7 +24,17 @@ import numpy as np
 from xquant.errors import BudgetExceeded
 from xquant.logging_utils import get_logger
 from xquant.strategy.evaluator import EvalContext
-from xquant.strategy.genome import HOLDS, STOPS, TAILS, TAKES, Condition, Genome, neighbours, random_genome
+from xquant.strategy.genome import (
+    HOLDS,
+    STOPS,
+    TAILS,
+    TAKES,
+    TRAILS,
+    Condition,
+    Genome,
+    neighbours,
+    random_genome,
+)
 
 log = get_logger("evolution")
 
@@ -139,6 +149,8 @@ class EvolutionEngine:
             g = replace(g, stop=self.rng.choice(STOPS))  # type: ignore[arg-type]
         elif r < 0.72:
             g = replace(g, take=self.rng.choice(TAKES))  # type: ignore[arg-type]
+        elif r < 0.76:
+            g = replace(g, trail=self.rng.choice(TRAILS))  # type: ignore[arg-type]
         elif r < 0.82 and len(conds) < self.max_cond:
             extra = random_genome(self.rng, self.features, self.categorical, 1, 0).conditions[0]
             if extra.feature not in {c.feature for c in conds}:

@@ -71,7 +71,7 @@ TRADE_COLS = ["signal_i", "entry_i", "exit_i", "direction", "entry_px", "exit_px
 def run_backtest(m: MarketArrays, entries: np.ndarray, direction: int, hold: int, stop: float | None,
                  take: float | None, costs: CostModel, window: slice, cost_mult: float = 1.0,
                  slippage_mult: float = 1.0, extra_latency: int = 0, entry_shift: int = 0,
-                 skip_mask: np.ndarray | None = None) -> BacktestResult:
+                 skip_mask: np.ndarray | None = None, trail: float | None = None) -> BacktestResult:
     a, b = window.start or 0, min(window.stop or len(m.close), len(m.close))
     lat = costs.latency_bars + extra_latency
     fixed_half = costs.spread_bps / 2 * 1e-4
@@ -113,14 +113,22 @@ def run_backtest(m: MarketArrays, entries: np.ndarray, direction: int, hold: int
         take_px = entry_px * np.exp(direction * take * dist) if take is not None else None
         exit_i, exit_px, reason = last, m.close[last], "time"
         start_check = f if m.has_ohlc else f + 1
+        # Trailing stop: trail x vol x sqrt(hold) behind the best CLOSE since entry. Updated only at bar
+        # closes and applied from the next bar on, so one bar can never both raise the stop and hit it.
+        best = entry_px
+        trail_px: float | None = None
         for t in range(start_check, last + 1):
+            eff_stop = stop_px
+            if trail_px is not None and (eff_stop is None or (trail_px - eff_stop) * direction > 0):
+                eff_stop = trail_px
             if m.has_ohlc:
                 lo, hi, op = m.low[t], m.high[t], m.open[t]
                 adverse = lo if direction > 0 else hi
                 favour = hi if direction > 0 else lo
-                if stop_px is not None and (adverse - stop_px) * direction <= 0:
-                    gap = (op - stop_px) * direction <= 0 and t > f
-                    exit_i, exit_px, reason = t, (op if gap else stop_px), "stop"
+                if eff_stop is not None and (adverse - eff_stop) * direction <= 0:
+                    gap = (op - eff_stop) * direction <= 0 and t > f
+                    exit_i, exit_px = t, (op if gap else eff_stop)
+                    reason = "trail" if eff_stop is trail_px else "stop"
                     break
                 if take_px is not None and (favour - take_px) * direction >= 0:
                     gap = (op - take_px) * direction >= 0 and t > f
@@ -128,12 +136,16 @@ def run_backtest(m: MarketArrays, entries: np.ndarray, direction: int, hold: int
                     break
             else:
                 c = m.close[t]
-                if stop_px is not None and (c - stop_px) * direction <= 0:
-                    exit_i, exit_px, reason = t, c, "stop"
+                if eff_stop is not None and (c - eff_stop) * direction <= 0:
+                    exit_i, exit_px, reason = t, c, ("trail" if eff_stop is trail_px else "stop")
                     break
                 if take_px is not None and (c - take_px) * direction >= 0:
                     exit_i, exit_px, reason = t, c, "take"
                     break
+            if trail is not None:
+                if (m.close[t] - best) * direction > 0:
+                    best = m.close[t]
+                trail_px = best * np.exp(-direction * trail * dist)
         # per-bar returns: mark to market from entry price to exit price
         le, lx = np.log(entry_px), np.log(exit_px)
         if exit_i == f:

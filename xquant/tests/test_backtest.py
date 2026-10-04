@@ -136,3 +136,16 @@ def test_session_features_are_causal_on_intraday_bars():
         assert P[name].notna().sum() > 100, name
         assert_causal(lambda b, n=name: build_primitives(b, None, "America/New_York")[n], bars, [300, 455, 899], name)
     assert P["sess_pos"].dropna().between(0, 1).all()
+
+
+def test_trailing_stop_locks_gains_and_never_uses_same_bar_high():
+    # price rises 10 bars then falls: trailing stop must exit on the way down, below the best close
+    path = np.r_[np.linspace(100, 110, 11), np.linspace(109, 100, 10)]
+    m = _arrays(path)
+    entries = np.zeros(len(path), dtype=bool)
+    entries[0] = True
+    res = run_backtest(m, entries, 1, 19, None, None, ZERO, slice(0, len(path)), trail=0.5)
+    t = res.trades.iloc[0]
+    assert t.reason == "trail" and t.exit_px < 110 and t.gross > 0
+    flat = run_backtest(m, entries, 1, 19, None, None, ZERO, slice(0, len(path)))
+    assert flat.trades["reason"].iloc[0] == "time"

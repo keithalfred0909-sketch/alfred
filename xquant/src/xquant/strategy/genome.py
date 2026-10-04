@@ -24,6 +24,7 @@ HOLDS = [1, 2, 3, 5, 8, 10, 15, 20]
 STOPS: list[float | None] = [None, 0.5, 1.0, 1.5, 2.0]
 TAKES: list[float | None] = [None, 1.0, 1.5, 2.0, 3.0]
 TAILS = [0.05, 0.1, 0.15, 0.2, 0.3]
+TRAILS: list[float | None] = [None, 0.5, 1.0, 1.5, 2.0]
 
 
 @dataclass(frozen=True)
@@ -45,10 +46,12 @@ class Genome:
     take: float | None = None
     regime: int | None = None
     origin: str = "random"
+    trail: float | None = None
 
     def key(self) -> str:
         conds = "&".join(sorted(c.key() for c in self.conditions))
-        return f"{conds}|d{self.direction}|h{self.hold}|s{self.stop}|t{self.take}|r{self.regime}"
+        base = f"{conds}|d{self.direction}|h{self.hold}|s{self.stop}|t{self.take}|r{self.regime}"
+        return base if self.trail is None else f"{base}|tr{self.trail}"  # old keys unchanged
 
     @property
     def signature(self) -> str:
@@ -56,7 +59,8 @@ class Genome:
 
     @property
     def complexity(self) -> int:
-        return len(self.conditions) + (self.stop is not None) + (self.take is not None) + (self.regime is not None)
+        return (len(self.conditions) + (self.stop is not None) + (self.take is not None) + (self.regime is not None)
+                + (self.trail is not None))
 
     def describe(self) -> str:
         cs = " AND ".join(f"{c.feature} {'in bottom' if c.side == 'low' else 'in top' if c.side == 'high' else '=='} "
@@ -67,6 +71,8 @@ class Genome:
             ex += f", stop {self.stop} x vol x sqrt(hold)"
         if self.take is not None:
             ex += f", take-profit {self.take} x vol x sqrt(hold)"
+        if self.trail is not None:
+            ex += f", trailing stop {self.trail} x vol x sqrt(hold) from best close"
         return f"{'LONG' if self.direction > 0 else 'SHORT'} when {cs}{reg}; {ex}"
 
     def to_dict(self) -> dict[str, Any]:
@@ -78,7 +84,7 @@ class Genome:
     def from_dict(d: dict[str, Any]) -> Genome:
         return Genome(conditions=tuple(Condition(**c) for c in d["conditions"]), direction=int(d["direction"]),
                       hold=int(d["hold"]), stop=d.get("stop"), take=d.get("take"), regime=d.get("regime"),
-                      origin=d.get("origin", "random"))
+                      origin=d.get("origin", "random"), trail=d.get("trail"))
 
 
 @dataclass
@@ -143,7 +149,8 @@ def random_genome(rng: np.random.Generator, features: list[str], categorical: di
     return Genome(conditions=tuple(conds), direction=int(rng.choice([-1, 1])), hold=int(rng.choice(HOLDS)),
                   stop=rng.choice(STOPS) if rng.random() < 0.3 else None,  # type: ignore[arg-type]
                   take=rng.choice(TAKES) if rng.random() < 0.2 else None,  # type: ignore[arg-type]
-                  regime=int(rng.integers(n_regimes)) if n_regimes and rng.random() < 0.15 else None)
+                  regime=int(rng.integers(n_regimes)) if n_regimes and rng.random() < 0.15 else None,
+                  trail=rng.choice(TRAILS[1:]) if rng.random() < 0.2 else None)  # type: ignore[arg-type]
 
 
 def neighbours(g: Genome, scale: float = 0.25) -> list[Genome]:
@@ -163,7 +170,7 @@ def neighbours(g: Genome, scale: float = 0.25) -> list[Genome]:
             out.append(replace(g, hold=h))
         else:
             out.append(replace(g, hold=g.hold + (1 if f > 1 else -1) if g.hold > 1 or f > 1 else g.hold))
-    for attr in ("stop", "take"):
+    for attr in ("stop", "take", "trail"):
         v = getattr(g, attr)
         if v is not None:
             for f in (1 - scale, 1 + scale):

@@ -109,7 +109,8 @@ def random_entry_test(ctx: EvalContext, g: Genome, actual: BacktestResult, windo
                 taken += 1
                 if taken >= n_tr:
                     break
-        null[i] = run_backtest(ctx.market, sig, g.direction, g.hold, g.stop, g.take, ctx.costs, window).returns.sum()
+        null[i] = run_backtest(ctx.market, sig, g.direction, g.hold, g.stop, g.take, ctx.costs, window,
+                               trail=g.trail).returns.sum()
     return {"status": "OK", "p_value": float((1 + (null >= act).sum()) / (1 + reps)), "actual": act,
             "null_mean": float(null.mean()), "null_p95": float(np.quantile(null, 0.95))}
 
@@ -121,7 +122,7 @@ def randomized_execution(ctx: EvalContext, g: Genome, fit: slice, window: slice,
     srs = []
     for _ in range(reps):
         skip = rng.random(len(sig)) < skip_frac
-        res = run_backtest(ctx.market, sig, g.direction, g.hold, g.stop, g.take, ctx.costs, window,
+        res = run_backtest(ctx.market, sig, g.direction, g.hold, g.stop, g.take, ctx.costs, window, trail=g.trail,
                            extra_latency=int(rng.integers(0, 2)), skip_mask=skip)
         srs.append(res.metrics.sharpe)
     return {"median_sharpe": float(np.median(srs)), "positive_share": float(np.mean(np.array(srs) > 0))}

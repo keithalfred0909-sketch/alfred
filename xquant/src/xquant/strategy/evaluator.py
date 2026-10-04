@@ -39,7 +39,7 @@ class EvalContext:
         if count:
             self.evaluations += 1
         return run_backtest(self.market, sig, genome.direction, genome.hold, genome.stop, genome.take,
-                            self.costs, eval_window, **kw)  # type: ignore[arg-type]
+                            self.costs, eval_window, trail=genome.trail, **kw)  # type: ignore[arg-type]
 
     def with_costs(self, costs: CostModel) -> EvalContext:
         return EvalContext(self.market, self.prims, self.exprs, costs, self.regimes, self.cache, self.evaluations)
