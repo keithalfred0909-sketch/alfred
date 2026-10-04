@@ -295,8 +295,15 @@ class ResearchOrchestrator:
         for k in known.values():
             if k["status"] == "VALIDATION":
                 d = k["data"]
-                h = Hypothesis(d["feature"], d["side"], d["q"], d["horizon"], d.get("regime"), d["threshold"] or float("nan"),
-                               id=k["id"], effect=d["effect"] or 0.0, status="VALIDATION")
+                def num(key: str, data: dict[str, Any] = d) -> float:
+                    v = data.get(key)
+                    return float(v) if v is not None else float("nan")
+                h = Hypothesis(d["feature"], d["side"], d["q"], d["horizon"], d.get("regime"), num("threshold"),
+                               id=k["id"], complexity=int(d.get("complexity") or 1), period=d.get("period") or "",
+                               sample=int(d.get("sample") or 0), baseline=num("baseline"), result=num("result"),
+                               effect=num("effect") if d.get("effect") is not None else 0.0,
+                               effect_size=num("effect_size"), p_value=num("p_value"), q_value=num("q_value"),
+                               confirm_effect=num("confirm_effect"), confirm_p=num("confirm_p"), status="VALIDATION")
                 if h.feature in pool.exprs:
                     validated.append(h)
         validated.sort(key=lambda h: -abs(h.effect_size) if math.isfinite(h.effect_size) else 0)
