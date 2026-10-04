@@ -35,9 +35,9 @@ def http_get(url: str, timeout: float = 60.0) -> bytes:
         raise DataUnavailableError(f"cannot reach {url}: {exc}") from exc
     if resp.status_code == 404:
         raise DataNotFound(f"{url} returned HTTP 404")
-    if resp.status_code == 429:
+    if resp.status_code in (429, 503):  # throttled / temporarily unavailable: caller should back off
         ra = resp.headers.get("Retry-After")
-        raise RateLimited(f"{url} returned HTTP 429", float(ra) if ra and ra.replace(".", "", 1).isdigit() else None)
+        raise RateLimited(f"{url} returned HTTP {resp.status_code}", float(ra) if ra and ra.replace(".", "", 1).isdigit() else None)
     if resp.status_code != 200:
         raise DataUnavailableError(f"{url} returned HTTP {resp.status_code}")
     return resp.content

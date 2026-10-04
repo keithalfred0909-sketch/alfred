@@ -21,6 +21,7 @@ Flat zero-volume filler candles (market closed) are dropped and counted.
 from __future__ import annotations
 
 import lzma
+import threading
 import time
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -81,7 +82,8 @@ class DukascopyCandleSource(DataSource):
     BASE = "https://datafeed.dukascopy.com/datafeed"
 
     def __init__(self, instrument: str, start: str, end: str, granularity: str = "hour", point: float = 1e-5,
-                 expected_range: list[float] | None = None, workers: int = 3, retries: int = 7,
+                 expected_range: list[float] | None = None, workers: int = 2, retries: int = 7,
+                 min_interval: float = 1.5,
                  fetch: FetchFn | None = None, cache_dir: Path | None = None, **extra: Any) -> None:
         super().__init__(instrument=instrument, start=start, end=end, granularity=granularity, point=point)
         if granularity not in GRANULARITY:
@@ -90,6 +92,11 @@ class DukascopyCandleSource(DataSource):
         self.start, self.end = pd.Timestamp(start, tz="UTC"), pd.Timestamp(end, tz="UTC")
         self.expected_range = (float(expected_range[0]), float(expected_range[1])) if expected_range else None
         self.workers, self.retries = workers, retries
+        # Polite pacing: minimum seconds between request starts, shared by all threads. The public feed
+        # throttles bursts (429/503, reset connections); pacing is faster overall than retry storms.
+        self.min_interval = min_interval
+        self._pace_lock = threading.Lock()
+        self._next_slot = 0.0
         from xquant.data.sources.builtin import http_get
         self._fetch = fetch or http_get
         self.cache_dir = (cache_dir or CACHE_DIR) / "dukascopy_candles" / self.instrument / granularity
@@ -133,6 +140,7 @@ class DukascopyCandleSource(DataSource):
             return None
         for attempt in range(self.retries):
             try:
+                self._pace()
                 blob = self._fetch(self.url_for(period, side))
                 cache.parent.mkdir(parents=True, exist_ok=True)
                 if not self._is_recent(period):  # the current period is still being written: do not cache
@@ -151,6 +159,16 @@ class DukascopyCandleSource(DataSource):
                     raise
                 time.sleep(3.0 * 2 ** attempt)
         return None
+
+    def _pace(self) -> None:
+        if self.min_interval <= 0:
+            return
+        with self._pace_lock:
+            now = time.monotonic()
+            wait = self._next_slot - now
+            self._next_slot = max(now, self._next_slot) + self.min_interval
+        if wait > 0:
+            time.sleep(wait)
 
     def _is_recent(self, period: datetime) -> bool:
         now = datetime.now(UTC)

@@ -63,7 +63,7 @@ def test_dukascopy_candle_source_end_to_end(tmp_path):
             raise DataNotFound(url)
         return files[key]
 
-    src = DukascopyCandleSource("EURUSD", "2023-01-01", "2023-04-01", granularity="hour", point=1e-5,
+    src = DukascopyCandleSource("EURUSD", "2023-01-01", "2023-04-01", granularity="hour", point=1e-5, min_interval=0,
                                 expected_range=[0.8, 1.8], fetch=fetch, cache_dir=tmp_path, workers=2)
     assert src.url_for(datetime(2023, 1, 1), "BID").endswith("/EURUSD/2023/00/BID_candles_hour_1.bi5")
     bars = src.fetch_series()
