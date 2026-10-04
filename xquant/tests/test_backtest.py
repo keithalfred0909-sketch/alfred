@@ -149,3 +149,45 @@ def test_trailing_stop_locks_gains_and_never_uses_same_bar_high():
     assert t.reason == "trail" and t.exit_px < 110 and t.gross > 0
     flat = run_backtest(m, entries, 1, 19, None, None, ZERO, slice(0, len(path)))
     assert flat.trades["reason"].iloc[0] == "time"
+
+
+def test_intraday_momentum_features_are_causal_and_correct():
+    from xquant.features.library import intraday_momentum_features
+    rng = np.random.default_rng(11)
+    idx = pd.date_range("2024-03-04 00:30", periods=48 * 12, freq="30min", tz="America/New_York").tz_convert("UTC")
+    c = 18000 * np.exp(np.cumsum(rng.normal(0, 0.001, len(idx))))
+    o = np.r_[c[0], c[:-1]]
+    bars = pd.DataFrame({"open": o, "high": np.maximum(o, c) * 1.0005, "low": np.minimum(o, c) * 0.9995,
+                         "close": c, "volume": 1.0}, index=idx)
+    P = build_primitives(bars, None, "America/New_York")
+    for name in ("tod", "im_open_ret", "im_open_sign"):
+        assert name in P
+        assert_causal(lambda b, n=name: build_primitives(b, None, "America/New_York")[n], bars, [200, 333, 575], name)
+    loc = idx.tz_convert("America/New_York")
+    s = pd.Series(np.log(c), index=loc)
+    day = pd.Timestamp("2024-03-12", tz="America/New_York")  # after the US DST change on 2024-03-10
+    manual = s[day + pd.Timedelta("10:00:00")] - s[day - pd.Timedelta(days=1) + pd.Timedelta("16:00:00")]
+    at_1530 = P["im_open_ret"][(loc == day + pd.Timedelta("15:30:00"))].iloc[0]
+    assert at_1530 == pytest.approx(manual)
+    assert P["tod"][(loc == day + pd.Timedelta("15:30:00"))].iloc[0] == 930
+    assert np.isnan(P["im_open_ret"][(loc == day + pd.Timedelta("09:30:00"))].iloc[0])  # unknown before 10:00
+    assert np.isnan(P["im_open_ret"][(loc == day + pd.Timedelta("16:30:00"))].iloc[0])
+    # hourly data does not get the sub-hourly features
+    hourly = bars.iloc[1::2]
+    assert "tod" not in build_primitives(hourly, None, "America/New_York")
+    assert intraday_momentum_features(bars["close"], loc)["tod"].max() <= 23 * 60 + 30
+
+
+def test_hold_zero_exits_at_close_of_entry_bar():
+    idx = pd.date_range("2024-01-02", periods=6, freq="30min", tz="UTC")
+    close = np.array([100.0, 101.0, 102.0, 103.0, 104.0, 105.0])
+    bars = pd.DataFrame({"open": close - 0.5, "high": close + 1, "low": close - 1, "close": close, "volume": 1.0},
+                        index=idx)
+    m = MarketArrays.from_bars(bars, 252 * 13)
+    m.vol = np.full(6, 0.01)
+    sig = np.zeros(6, dtype=bool)
+    sig[1] = True
+    res = run_backtest(m, sig, 1, 0, None, None, CostModel(spread_bps=0, commission_bps=0, slippage_bps=0), slice(0, 6))
+    t = res.trades.iloc[0]
+    assert t["entry_i"] == 2 and t["exit_i"] == 2  # in at the open of bar 2, out at its close
+    assert t["gross"] == pytest.approx(np.log(102.0 / 101.5))

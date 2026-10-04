@@ -29,7 +29,8 @@ from xquant.validation.splits import DataSplits, SplitGuard
 # Bump whenever the attack battery changes meaningfully. Stored with every dossier; a strategy examined with
 # an older battery is re-examined instead of reusing its verdict (a corrected test is a new scientific reason).
 # v2: entry displacement uses delays (+1, +2) only.
-ATTACK_SUITE_VERSION = 2
+# v3: the weekday-concentration attack is skipped only for explicit weekday (dow) rules, no longer for hour rules.
+ATTACK_SUITE_VERSION = 3
 EQUITY_POINTS = 400
 
 
@@ -190,7 +191,7 @@ class AdversarialEngine:
         if g.regime is None and "max_regime_profit_share" in bd:
             A(Attack("other_regimes", "Does it work in more than one market regime?", "reject",
                      bool(bd["max_regime_profit_share"] <= 0.85), bd["max_regime_profit_share"], "<= 85% from one regime"))
-        if not any(c.feature in ("dow", "hour") for c in g.conditions):
+        if not any(c.feature == "dow" for c in g.conditions):  # measured on weekdays: exempt only explicit dow rules
             A(Attack("schedule_dependence", "Does it depend on one weekday/hour?", "reject",
                      bool(bd.get("max_weekday_profit_share", 1.0) <= 0.6), bd.get("max_weekday_profit_share"), "<= 60%"))
 

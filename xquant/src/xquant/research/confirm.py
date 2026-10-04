@@ -63,8 +63,9 @@ def spec_genomes(spec: dict[str, Any]) -> list[Genome]:
         g = Genome.from_dict({"conditions": v["conditions"], "direction": v["direction"], "hold": v["hold"],
                               "stop": v.get("stop"), "take": v.get("take"), "trail": v.get("trail"),
                               "origin": f"prereg:{spec['name']}#{i + 1}"})
-        if g.direction not in (-1, 1) or g.hold < 1:
-            raise ConfigError(f"variant {i + 1}: direction must be +-1 and hold >= 1")
+        if g.direction not in (-1, 1) or g.hold < 0:
+            # hold = bars held AFTER the fill bar (0 = exit at the close of the bar entered at its open)
+            raise ConfigError(f"variant {i + 1}: direction must be +-1 and hold >= 0")
         out.append(g)
     if len({g.key() for g in out}) != len(out):
         raise ConfigError("duplicate variants in spec")

@@ -1,0 +1,35 @@
+# PRE-REGISTRATION - do not edit after evaluation (the lab stores the SHA-256 and refuses edited re-runs).
+# Run once: uv run xquant confirm --spec configs/preregistered/nas100_intraday_momentum_v1.yaml --offline
+name: nas100_intraday_momentum_v1
+asset: NAS100_M30
+registered_by: X-QUANT, 2026-10-04, before any NAS100 minute/30-minute data was evaluated (the download was still
+  running)
+hypothesis: 'Market intraday momentum (Gao, Han, Li & Zhou, Journal of Financial Economics, 2018, documented on
+  the S&P 500 ETF): the return from the previous trading day''s 16:00 New York close to 10:00 New York predicts
+  the sign of the last half-hour return (15:30-16:00). Long the last half hour after a positive first-half-hour
+  return; short after a negative one. One trade per trading day.'
+rationale: 'Published, economically motivated effect (late informed trading / hedging flows into the close). Applied
+  here to the Nasdaq 100 (Dukascopy USATECHIDXUSD CFD) as an EXTENSION of the S&P 500 result, on 2017-2026 data.
+  Entry at the 15:30 bar open, exit at the 16:00 bar close (hold 0 = exit at the close of the entry bar). Costs:
+  NQ-futures-like ~0.87 bps per round trip (config NAS100_M30); CFD costs reported separately as a sensitivity,
+  not as the verdict. Known conservative biases of the standard battery here: the parameter-perturbation neighbours
+  hold into the 16:00-16:30 after-hours bar, which is outside the hypothesis.'
+variants:
+- conditions:
+  - feature: im_open_sign
+    side: eq
+    q: 1.0
+  - feature: tod
+    side: eq
+    q: 930.0
+  direction: 1
+  hold: 0
+- conditions:
+  - feature: im_open_sign
+    side: eq
+    q: -1.0
+  - feature: tod
+    side: eq
+    q: 930.0
+  direction: -1
+  hold: 0

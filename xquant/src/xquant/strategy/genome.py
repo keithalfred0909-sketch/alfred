@@ -66,7 +66,7 @@ class Genome:
         cs = " AND ".join(f"{c.feature} {'in bottom' if c.side == 'low' else 'in top' if c.side == 'high' else '=='} "
                           f"{c.q:.0%}" if c.side != "eq" else f"{c.feature} == {c.q:g}" for c in self.conditions)
         reg = f" AND regime == {self.regime}" if self.regime is not None else ""
-        ex = f"exit after {self.hold} bars"
+        ex = f"exit after {self.hold} bars" if self.hold else "exit at the close of the entry bar"
         if self.stop is not None:
             ex += f", stop {self.stop} x vol x sqrt(hold)"
         if self.take is not None:

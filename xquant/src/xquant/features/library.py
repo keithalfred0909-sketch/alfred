@@ -66,6 +66,8 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
     if local.hour.nunique() > 1:
         P["hour"] = pd.Series(local.hour.astype(float), index=bars.index)
         P.update(session_features(bars, local, vol[20]))
+        if len(bars) > 2 and pd.to_timedelta(pd.Series(bars.index).diff().median()) <= pd.Timedelta("30min"):
+            P.update(intraday_momentum_features(c, local))
     if bars[["open", "high", "low"]].notna().all(axis=None):
         rng_ = np.log(bars["high"] / bars["low"])
         P["range_vol"] = rng_ / vol[20]
@@ -165,6 +167,41 @@ def session_features(bars: pd.DataFrame, local: pd.DatetimeIndex, vol: pd.Series
     return {k: s.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, s in out.items()}
 
 
+def intraday_momentum_features(close: pd.Series, local: pd.DatetimeIndex, open_hm: int = 600,
+                               close_hm: int = 960, max_gap_days: int = 4) -> dict[str, pd.Series]:
+    """US cash-session structure for sub-hourly bars stamped at their close (New York time).
+
+    * ``tod`` (categorical): minutes after local midnight of the bar close (15:30 -> 930).
+    * ``im_open_ret``: log return from the previous trading day's 16:00 close to today's 10:00 close (the
+      "first half-hour" return of Gao, Han, Li & Zhou 2018, overnight included); defined on today's bars
+      from 10:00 to 16:00, NaN elsewhere. ``im_open_sign`` (categorical) is its sign.
+    Only closes already printed are used; a previous close older than ``max_gap_days`` is not used.
+    """
+    naive = local.tz_localize(None)
+    mins = np.asarray(naive.hour * 60 + naive.minute)
+    date = pd.DatetimeIndex(naive.normalize())
+    lc = np.log(close.to_numpy(dtype=float))
+    out: dict[str, pd.Series] = {"tod": pd.Series(mins.astype(float), index=close.index)}
+    closes = pd.Series(lc[mins == close_hm], index=date[mins == close_hm])
+    closes = closes[~closes.index.duplicated(keep="last")]
+    opens = pd.Series(lc[mins == open_hm], index=date[mins == open_hm])
+    opens = opens[~opens.index.duplicated(keep="last")]
+    first = pd.Series(np.nan, index=opens.index)
+    if len(closes) and len(opens):
+        pos = np.searchsorted(closes.index.to_numpy(), opens.index.to_numpy(), side="left") - 1  # strictly earlier day
+        ok = pos >= 0
+        prev_val = np.where(ok, closes.to_numpy()[np.clip(pos, 0, None)], np.nan)
+        prev_day = np.where(ok, closes.index.to_numpy()[np.clip(pos, 0, None)], np.datetime64("NaT"))
+        fresh = ok & ((opens.index.to_numpy() - prev_day) <= np.timedelta64(max_gap_days, "D"))
+        first = pd.Series(np.where(fresh, opens.to_numpy() - prev_val, np.nan), index=opens.index)
+    in_day = (mins >= open_hm) & (mins <= close_hm)
+    val = pd.Series(date, index=close.index).map(first).to_numpy(dtype=float)
+    ret = pd.Series(np.where(in_day, val, np.nan), index=close.index)
+    out["im_open_ret"] = ret
+    out["im_open_sign"] = pd.Series(np.sign(ret.to_numpy()), index=close.index)
+    return out
+
+
 def _streak(r: pd.Series) -> pd.Series:
     s = np.sign(r.fillna(0.0)).to_numpy()
     out = np.zeros(len(s))
@@ -176,7 +213,7 @@ def _streak(r: pd.Series) -> pd.Series:
     return pd.Series(out, index=r.index)
 
 
-CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar"}
+CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar", "tod", "im_open_sign"}
 _CATEGORICAL_PATTERN = re.compile(r"_smt\d+$")
 
 
