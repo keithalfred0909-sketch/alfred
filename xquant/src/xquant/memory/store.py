@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import math
 import sqlite3
@@ -294,11 +295,32 @@ class ResearchMemory:
         return out
 
     # ---- maintenance -----------------------------------------------------------------------------
-    def compact(self, max_points: int = 400) -> dict[str, int]:
+    def compact(self, max_points: int = 400, archive: Path | None = None) -> dict[str, int]:
         """Downsample stored equity curves, compress every JSON blob (legacy rows included) and VACUUM.
-        Verdicts, metrics and statistics are untouched."""
-        changed = 0
+        Verdicts, metrics and statistics are untouched.
+
+        With ``archive`` (a .jsonl.gz path), the full record of every REJECTED hypothesis is appended there
+        and its in-database blob is reduced to the few fields not already stored as columns. Status,
+        p/q-values, effect size, sample and description stay in the database, so DO-NOT-REDISCOVER and
+        every query keep working; only VALIDATION/OVERFIT rows keep their full blob (they are reused)."""
+        changed = archived = 0
         before = self.path.stat().st_size
+        if archive is not None:
+            rows = self.conn.execute("SELECT id, signature, asset, dataset_version, data FROM hypotheses "
+                                     "WHERE status='REJECTED'").fetchall()
+            todo = [(r, unpack(r["data"], {})) for r in rows]
+            todo = [(r, d) for r, d in todo if not d.get("archived")]
+            if todo:
+                archive.parent.mkdir(parents=True, exist_ok=True)
+                with gzip.open(archive, "at", encoding="utf-8") as fh:  # appends a new gzip member
+                    for r, d in todo:
+                        fh.write(_j({"id": r["id"], "signature": r["signature"], "asset": r["asset"],
+                                     "dataset_version": r["dataset_version"], "data": d}) + "\n")
+                with self.tx() as c:
+                    for r, d in todo:
+                        keep = {k: d.get(k) for k in ("threshold", "effect", "confirm_effect", "confirm_p")}
+                        c.execute("UPDATE hypotheses SET data=? WHERE id=?", (pack({**keep, "archived": True}), r["id"]))
+                archived = len(todo)
         with self.tx() as c:
             for r in c.execute("SELECT id, dossier FROM strategies").fetchall():
                 d = unpack(r["dossier"], {})
@@ -313,7 +335,8 @@ class ResearchMemory:
                     c.execute(f"UPDATE {table} SET data=? WHERE {key}=?", (pack(unpack(r["data"], {})), r[key]))
         self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         self.conn.execute("VACUUM")
-        return {"strategies_downsampled": changed, "bytes_before": before, "bytes_after": self.path.stat().st_size}
+        return {"strategies_downsampled": changed, "hypotheses_archived": archived, "bytes_before": before,
+                "bytes_after": self.path.stat().st_size}
 
     # ---- queries for dashboard / CLI ---------------------------------------------------------------
     def query(self, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:

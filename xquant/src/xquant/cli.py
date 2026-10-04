@@ -105,7 +105,7 @@ def cmd_memory(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     mem = ResearchMemory(args.memory or "research_output/memory.db")
     if args.what == "compact":
-        print(json.dumps(mem.compact()))
+        print(json.dumps(mem.compact(archive=PROJECT_ROOT / "research_output" / "archive" / "hypotheses_rejected.jsonl.gz")))
         for p in sorted((PROJECT_ROOT / "research_output" / "reports").glob("*.json")):
             data = json.loads(p.read_text())
             for key in ("dossiers", "ranking"):

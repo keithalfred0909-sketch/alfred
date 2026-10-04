@@ -103,3 +103,25 @@ def test_memory_compact_downsamples_equity_and_keeps_verdicts(tmp_path):
     stored = mem.known_strategy("abc", "SYN", "v1")
     assert stored["id"] == sid and stored["status"] == "REJECTED"
     assert 400 <= len(stored["dossier"]["equity"]["combined"]) <= 420
+
+
+def test_compact_archives_rejected_hypotheses_without_losing_reuse(tmp_path):
+    import gzip
+    import json
+
+    mem = ResearchMemory(tmp_path / "m.db")
+    base = {"feature": "ret_5", "side": "low", "q": 0.1, "horizon": 3, "regime": None, "period": "p", "sample": 500,
+            "baseline": 0.0, "result": 1e-4, "p_value": 0.4, "q_value": 0.9, "effect_size": 0.01, "confidence": 0.1,
+            "complexity": 1, "threshold": -0.01, "effect": 1e-4, "confirm_effect": None, "confirm_p": None}
+    hyps = [{**base, "signature": "rej", "description": "rejected one", "status": "REJECTED"},
+            {**base, "signature": "val", "description": "validated one", "status": "VALIDATION", "q": 0.2}]
+    mem.record_hypotheses("A", "v", "E", hyps)
+    arch = tmp_path / "arch.jsonl.gz"
+    res = mem.compact(archive=arch)
+    assert res["hypotheses_archived"] == 1
+    assert mem.compact(archive=arch)["hypotheses_archived"] == 0  # idempotent
+    known = mem.known_hypotheses("A", "v")
+    assert known["rej"]["status"] == "REJECTED" and known["rej"]["data"]["archived"]
+    assert known["val"]["data"]["feature"] == "ret_5"  # reused rows keep their full record
+    rows = [json.loads(x) for x in gzip.open(arch, "rt")]
+    assert len(rows) == 1 and rows[0]["data"]["description"] == "rejected one"
