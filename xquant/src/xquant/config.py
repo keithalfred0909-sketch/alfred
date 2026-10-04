@@ -100,6 +100,8 @@ class StatsSpec(BaseModel):
     fdr_alpha: float = 0.05
     min_samples: int = 40
     min_trades: int = 30
+    # Required trading frequency (average trades per trading day = 5 per week over the window). 0 = none.
+    min_trades_per_day: float = 0.0
     horizons: list[int] = Field(default_factory=lambda: [1, 3, 5, 10, 20])
     quantiles: list[float] = Field(default_factory=lambda: [0.1, 0.2, 0.8, 0.9])
     bootstrap_reps: int = 1000

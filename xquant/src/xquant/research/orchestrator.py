@@ -225,7 +225,8 @@ class ResearchOrchestrator:
         rebuild = lambda bars: self._build_context(bars, ds.exog, pool.exprs, regime_model,  # noqa: E731
                                                    ppy * len(bars) / len(ds.bars))
         adv = AdversarialEngine(ctx, splits, self.guard, cfg.robustness, rebuild, ds.bars, cfg.asset.timezone,
-                                cfg.stats.min_trades, np.random.default_rng(cfg.research.seed + 1))
+                                cfg.stats.min_trades, np.random.default_rng(cfg.research.seed + 1),
+                                min_trades_per_day=cfg.stats.min_trades_per_day)
         dossiers = self._evolution_lines(ctx, pool, validated, splits, adv, regime_model, out)
 
         # 8. TEST, RANKING, FINAL
@@ -369,7 +370,8 @@ class ResearchOrchestrator:
                 eng = EvolutionEngine(ctx, train, feats, {k: v for k, v in categorical.items() if k in feats},
                                       seeds, rng, self.budget.population, self.budget.max_generations,
                                       self.budget.patience, self.budget.max_complexity, self.cfg.stats.min_trades,
-                                      n_regimes=n_reg, deadline=self.deadline)
+                                      n_regimes=n_reg, deadline=self.deadline,
+                                      min_trades_per_day=self.cfg.stats.min_trades_per_day)
                 if name == "regime_conditioned":
                     eng.seeds = [replace(eng._random(), regime=int(rng.integers(n_reg))) for _ in range(eng.pop_size // 2)]
                 if name == "macro_conditioned":

@@ -51,6 +51,7 @@ class EvolutionEngine:
     def __init__(self, ctx: EvalContext, train: slice, features: list[str], categorical: dict[str, list[float]],
                  seeds: list[Genome], rng: np.random.Generator, population: int, generations: int,
                  patience: int, max_complexity: int, min_trades: int, n_regimes: int = 0, folds: int = 4,
+                 min_trades_per_day: float = 0.0,
                  deadline: float | None = None) -> None:
         self.ctx, self.train = ctx, train
         self.features, self.categorical = features, categorical
@@ -58,6 +59,9 @@ class EvolutionEngine:
         self.pop_size, self.max_gen, self.patience = population, generations, patience
         self.max_cond = max(1, max_complexity - 1)
         self.max_complexity, self.min_trades = max_complexity, min_trades
+        idx = ctx.market.index[train]
+        self.train_days = max((idx[-1] - idx[0]).total_seconds() / 86400.0, 1.0)
+        self.min_trades = max(min_trades, int(min_trades_per_day * self.train_days * 5 / 7))  # trading days
         self.n_regimes, self.folds = n_regimes, folds
         self.deadline = deadline
         self.cache: dict[str, Individual] = {}
@@ -81,7 +85,7 @@ class EvolutionEngine:
         self.sr_trials.append(met.sharpe)
         if met.trades < self.min_trades:
             ind.fitness = -10.0 + met.trades / max(self.min_trades, 1)
-            ind.details = {"reason": "too few trades", "trades": met.trades}
+            ind.details = {"reason": "too few trades", "trades": met.trades, "required": self.min_trades}
             self.cache[key] = ind
             return ind
         rets = res.returns.to_numpy()

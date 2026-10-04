@@ -100,10 +100,11 @@ class Dossier:
 class AdversarialEngine:
     def __init__(self, ctx: EvalContext, splits: DataSplits, guard: SplitGuard, spec: RobustnessSpec,
                  rebuild: Callable[[pd.DataFrame], EvalContext], bars: pd.DataFrame, tz: str,
-                 min_trades: int, rng: np.random.Generator) -> None:
+                 min_trades: int, rng: np.random.Generator, min_trades_per_day: float = 0.0) -> None:
         self.ctx, self.splits, self.guard, self.spec = ctx, splits, guard, spec
         self.rebuild, self.bars, self.tz = rebuild, bars, tz
         self.min_trades, self.rng = min_trades, rng
+        self.min_trades_per_day = min_trades_per_day
         self.train = splits.slice("train")
         self.val = splits.slice("validation")
         self.combined = slice(0, self.val.stop)
@@ -129,6 +130,12 @@ class AdversarialEngine:
         cm = cb_res.metrics
         A(Attack("enough_trades", "Is the sample of trades large enough?", "reject", bool(cm.trades >= self.min_trades),
                  cm.trades, f">= {self.min_trades}"))
+        if self.min_trades_per_day > 0:
+            vi = ctx.market.index[va]
+            days = max((vi[-1] - vi[0]).total_seconds() / 86400.0 * 5 / 7, 1.0)  # trading days
+            freq = vm.trades / days
+            A(Attack("trade_frequency", f"Does it trade at least {self.min_trades_per_day:g} times per day out of sample?",
+                     "reject", bool(freq >= self.min_trades_per_day), round(freq, 3), f">= {self.min_trades_per_day:g}/day"))
         re = rb.random_entry_test(ctx, g, cb_res, cb, sp.random_entry_reps, self.rng)
         d.monte_carlo["random_entry"] = re
         A(Attack("beats_random_entries", "Does its timing beat random entries with the same exits and costs?",
