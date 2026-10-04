@@ -60,7 +60,8 @@ class MarketBehaviorEngine:
         self.vol20 = self.r.rolling(20, min_periods=15).std()
         self.vol60 = self.r.rolling(60, min_periods=40).std()
         self.ppy = periods_per_year(pd.DatetimeIndex(c.index))
-        self.fwd = {h: forward_returns(self.lc, h) for h in sorted(set(horizons) | {1})}
+        # Configured horizons plus the fixed ones used by the built-in test catalogue (all in bars).
+        self.fwd = {h: forward_returns(self.lc, h) for h in sorted(set(horizons) | {1, 5, 10, 20})}
         self.train_mask = splits.mask("train").to_numpy()
         self.val_mask = splits.mask("validation").to_numpy()
         self.regimes: RegimeModel | None = None

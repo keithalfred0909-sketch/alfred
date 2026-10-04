@@ -14,6 +14,10 @@ class DataUnavailableError(XQuantError):
     """A data source could not be reached or is not configured. Never fabricate a substitute."""
 
 
+class DataNotFound(DataUnavailableError):
+    """The source answered but has no data for the request (e.g. HTTP 404 for a period with no file)."""
+
+
 class DataQualityError(XQuantError):
     """Data failed validation badly enough that research on it would be meaningless."""
 

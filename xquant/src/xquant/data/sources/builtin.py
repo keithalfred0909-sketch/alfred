@@ -22,7 +22,7 @@ import pandas as pd
 import requests
 
 from xquant.data.sources.base import CACHE_DIR, DATASETS_DIR, DataSource, FetchFn, register
-from xquant.errors import ConfigError, DataQualityError, DataUnavailableError
+from xquant.errors import ConfigError, DataNotFound, DataQualityError, DataUnavailableError
 from xquant.logging_utils import get_logger
 
 log = get_logger("data.sources")
@@ -33,6 +33,8 @@ def http_get(url: str, timeout: float = 60.0) -> bytes:
         resp = requests.get(url, timeout=timeout, headers={"User-Agent": "xquant-research/0.1"})
     except requests.RequestException as exc:
         raise DataUnavailableError(f"cannot reach {url}: {exc}") from exc
+    if resp.status_code == 404:
+        raise DataNotFound(f"{url} returned HTTP 404")
     if resp.status_code != 200:
         raise DataUnavailableError(f"{url} returned HTTP {resp.status_code}")
     return resp.content
@@ -308,3 +310,7 @@ def parse_date(s: str | date) -> date:
         return date.fromisoformat(s)
     except ValueError as exc:
         raise ConfigError(f"bad date {s!r}") from exc
+
+
+# Additional sources live in their own modules; importing them here registers them.
+from xquant.data.sources import dukascopy_candles, mt5  # noqa: E402,F401

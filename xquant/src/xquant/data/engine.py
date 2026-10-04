@@ -72,12 +72,26 @@ class DataEngine:
             notes.append("close-only data: no open/high/low; intrabar stops and range features unavailable")
         if not caps.volume:
             notes.append("no volume data")
+        if "spread" in bars.columns and bars["spread"].notna().any():
+            notes.append(f"per-bar spread available (median {bars['spread'].median():.6g})")
+        if self.asset.cross_check:
+            cc = self.cross_check(bars)
+            notes.append(f"cross-check vs {self.asset.cross_check.get('asset')}: {cc}")
         meta = DatasetMeta(symbol=self.asset.symbol, timeframe=self.asset.timeframe, source=src.describe(),
                            sha256=frame_sha256(bars), capabilities=caps, n_rows=len(bars),
                            start=str(bars.index[0]), end=str(bars.index[-1]), notes=notes)
         log.info("loaded %s: %d bars %s..%s (%s), quality %s", self.asset.symbol, len(bars),
                  bars.index[0].date(), bars.index[-1].date(), caps.describe(), rep.verdict)
         return bars, meta, rep
+
+    def cross_check(self, bars: pd.DataFrame) -> dict[str, Any]:
+        """Validate the price source against an independent reference asset config (raises on failure)."""
+        from xquant.config import load_config
+        from xquant.data.crosscheck import cross_check_daily
+        cc = dict(self.asset.cross_check or {})
+        ref_cfg = load_config(str(cc.pop("asset")))
+        ref_bars, _, _ = DataEngine(ref_cfg.asset, offline=True).load_bars()
+        return cross_check_daily(bars, ref_bars["close"], **cc)
 
     def load_exogenous(self, bar_index: pd.DatetimeIndex) -> tuple[pd.DataFrame, dict[str, dict[str, Any]]]:
         cols: dict[str, pd.Series] = {}
@@ -92,11 +106,12 @@ class DataEngine:
                 metas[spec.name] = {"status": "UNAVAILABLE", "reason": str(exc)}
                 continue
             raw.index = pd.DatetimeIndex(raw.index)
+            stz = spec.timezone or self.asset.timezone
             if raw.index.tz is not None:
-                raw.index = raw.index.tz_convert(self.asset.timezone).tz_localize(None)
+                raw.index = raw.index.tz_convert(stz).tz_localize(None)
             series = transform_series(raw.astype("float64"), spec.transform, spec.frequency)
             aligned = align_point_in_time(series.rename(spec.name), bar_index, spec.frequency,
-                                          spec.availability_lag_days, tz=self.asset.timezone)
+                                          spec.availability_lag_days, tz=stz)
             cols[spec.name] = aligned
             metas[spec.name] = {"status": "OK", "frequency": spec.frequency, "lag_days": spec.availability_lag_days,
                                 "transform": spec.transform, "source": src.describe(),

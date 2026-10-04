@@ -5,7 +5,8 @@ Execution model (no information from the future can reach a decision):
 * A signal is evaluated on the close of bar s (all features are causal).
 * The order fills on bar f = s + 1 + latency: at its open when real opens exist, otherwise at its close
   (close-only data such as a daily fixing: the next observable price).
-* Every fill pays half the spread + commission + slippage (all in bps of price).
+* Every fill pays half the spread + commission + slippage (all in bps of price). When the data carries an
+  observed per-bar spread, the half spread charged is max(configured, observed) at the fill bar.
 * Stops / take-profits are volatility-scaled distances fixed at entry (vol known at s). With high/low data
   they trigger intrabar; if both could trigger in one bar the stop is assumed first (pessimistic); a gap
   through the level fills at the open. With close-only data they are checked on closes only.
@@ -38,14 +39,18 @@ class MarketArrays:
     vol: np.ndarray  # per-bar sigma of log returns known at each bar (20-bar realised)
     has_ohlc: bool
     ppy: float
+    spread_frac: np.ndarray | None = None  # observed bid/ask spread as a fraction of price, per bar
 
     @staticmethod
     def from_bars(bars: pd.DataFrame, ppy: float) -> MarketArrays:
         lc = np.log(bars["close"])
         vol = lc.diff().rolling(20, min_periods=15).std().to_numpy()
         has = bool(bars[["open", "high", "low"]].notna().all(axis=None))
+        spread = None
+        if "spread" in bars.columns and bars["spread"].notna().any():
+            spread = (bars["spread"] / bars["close"]).to_numpy(float)
         return MarketArrays(pd.DatetimeIndex(bars.index), bars["close"].to_numpy(float), bars["open"].to_numpy(float),
-                            bars["high"].to_numpy(float), bars["low"].to_numpy(float), vol, has, ppy)
+                            bars["high"].to_numpy(float), bars["low"].to_numpy(float), vol, has, ppy, spread)
 
 
 @dataclass
@@ -69,7 +74,15 @@ def run_backtest(m: MarketArrays, entries: np.ndarray, direction: int, hold: int
                  skip_mask: np.ndarray | None = None) -> BacktestResult:
     a, b = window.start or 0, min(window.stop or len(m.close), len(m.close))
     lat = costs.latency_bars + extra_latency
-    per_fill = ((costs.spread_bps / 2 + costs.commission_bps) * cost_mult + costs.slippage_bps * slippage_mult) * 1e-4
+    fixed_half = costs.spread_bps / 2 * 1e-4
+    other = costs.commission_bps * cost_mult * 1e-4 + costs.slippage_bps * slippage_mult * 1e-4
+    data_spread = m.spread_frac if (costs.use_data_spread and m.spread_frac is not None) else None
+
+    def fill_cost(i: int) -> float:
+        half = fixed_half
+        if data_spread is not None and np.isfinite(data_spread[i]):
+            half = max(half, data_spread[i] / 2)  # conservative: never cheaper than the configured spread
+        return half * cost_mult + other
     lc = np.log(m.close)
     rets = np.zeros(b - a)
     in_pos = np.zeros(b - a, dtype=bool)
@@ -130,11 +143,12 @@ def run_backtest(m: MarketArrays, entries: np.ndarray, direction: int, hold: int
             if exit_i - 1 > f:
                 rets[f + 1 - a:exit_i - a] += direction * np.diff(lc[f:exit_i])
             rets[exit_i - a] += direction * (lx - lc[exit_i - 1])
-        rets[f - a] -= per_fill
-        rets[exit_i - a] -= per_fill
+        c_in, c_out = fill_cost(f), fill_cost(exit_i)
+        rets[f - a] -= c_in
+        rets[exit_i - a] -= c_out
         in_pos[f - a:exit_i - a + 1] = True
         gross = direction * (lx - le)
-        trades.append((s, f, exit_i, direction, entry_px, exit_px, gross, 2 * per_fill, gross - 2 * per_fill,
+        trades.append((s, f, exit_i, direction, entry_px, exit_px, gross, c_in + c_out, gross - c_in - c_out,
                        exit_i - f, reason))
         nxt = exit_i
     tdf = pd.DataFrame(trades, columns=TRADE_COLS)

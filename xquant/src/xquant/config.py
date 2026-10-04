@@ -32,6 +32,8 @@ class SourceSpec(BaseModel):
 class MacroSeriesSpec(BaseModel):
     name: str
     source: SourceSpec
+    # Timezone of the series' date stamps (defaults to the asset timezone). Matters for intraday bars.
+    timezone: str | None = None
     frequency: Literal["daily", "monthly", "quarterly"]
     # Point-in-time availability. A value stamped at period P becomes usable only after this lag,
     # expressed against the *end* of P. Conservative defaults are preferred to optimistic ones.
@@ -45,6 +47,8 @@ class CostModel(BaseModel):
     commission_bps: float = 0.5  # per fill
     slippage_bps: float = 0.5  # per fill
     latency_bars: int = 0  # extra bars between signal and fill
+    # When the data carries a per-bar spread, charge max(fixed half spread, observed half spread) per fill.
+    use_data_spread: bool = True
 
 
 class SplitSpec(BaseModel):
@@ -73,6 +77,9 @@ class AssetSpec(BaseModel):
     macro: list[MacroSeriesSpec] = Field(default_factory=list)
     cross_assets: list[MacroSeriesSpec] = Field(default_factory=list)
     calendar_source: SourceSpec | None = None
+    # Independent reference to validate the price source against, e.g. the Fed noon fixing for EUR/USD:
+    # {asset: EURUSD, local_time: "12:00", tz: America/New_York, max_median_bps: 10, min_return_corr: 0.9}
+    cross_check: dict[str, Any] | None = None
     news_source: SourceSpec | None = None
 
 
@@ -158,8 +165,10 @@ def load_config(asset: str | Path, overrides: dict[str, Any] | None = None,
     default_path = default_path or CONFIG_DIR / "default.yaml"
     asset_path = Path(asset)
     if not asset_path.suffix:
-        key = str(asset).lower().replace("/", "").replace("-", "").replace("_", "")
-        asset_path = CONFIG_DIR / "assets" / f"{key}.yaml"
+        raw = str(asset).lower().replace("/", "")
+        candidates = [raw, raw.replace("-", "_"), raw.replace("-", "").replace("_", "")]
+        asset_path = next((CONFIG_DIR / "assets" / f"{k}.yaml" for k in candidates
+                           if (CONFIG_DIR / "assets" / f"{k}.yaml").exists()), CONFIG_DIR / "assets" / f"{candidates[-1]}.yaml")
     if not asset_path.exists():
         available = sorted(p.stem.upper() for p in (CONFIG_DIR / "assets").glob("*.yaml"))
         raise ConfigError(f"No asset config at {asset_path}. Available: {available}")

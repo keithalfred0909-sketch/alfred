@@ -196,14 +196,16 @@ def runs_test(signs: np.ndarray) -> TestResult:
 
 
 def stationary_bootstrap_indices(n: int, mean_block: float, rng: np.random.Generator) -> np.ndarray:
-    """Politis-Romano stationary bootstrap index sequence of length n."""
-    idx = np.empty(n, dtype=np.int64)
-    p = 1.0 / mean_block
-    i = int(rng.integers(n))
-    for t in range(n):
-        idx[t] = i
-        i = int(rng.integers(n)) if rng.random() < p else (i + 1) % n
-    return idx
+    """Politis-Romano stationary bootstrap index sequence of length n (vectorised).
+
+    Each position starts a new block with probability 1/mean_block (always at t=0); otherwise it continues
+    the previous block (index + 1, wrapping around)."""
+    restart = rng.random(n) < 1.0 / mean_block
+    restart[0] = True
+    starts = rng.integers(0, n, size=n)
+    t = np.arange(n)
+    last = np.maximum.accumulate(np.where(restart, t, 0))
+    return ((starts[last] + (t - last)) % n).astype(np.int64)
 
 
 def sharpe(returns: np.ndarray, periods_per_year: float) -> float:

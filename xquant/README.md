@@ -28,6 +28,26 @@ poblaciones y generaciones grandes, paciencia alta). Todos los límites son conf
 que una investigación sea exactamente reproducible. Sin `--offline` se descargan de nuevo y, si cambian,
 cambia la versión del dataset (y la memoria reabre las hipótesis afectadas).
 
+## Datos intradía (EUR/USD H1)
+
+```bash
+uv run xquant data validate --asset EURUSD_H1     # descarga Dukascopy + validación cruzada vs Fed
+uv run xquant research --asset EURUSD_H1 --mode standard
+```
+
+- **Fuente:** velas horarias BID y ASK de Dukascopy (un fichero por mes, descarga en paralelo, caché en
+  `cache/`). Barras a precio medio, sellado al cierre, spread observado por barra y volumen de ticks.
+  Requiere `datafeed.dukascopy.com` en los dominios permitidos del entorno.
+- **Comprobaciones antes de investigar:** consistencia OHLC (detecta un orden de campos mal interpretado),
+  escala de precio, `ask >= bid`, y **validación cruzada contra el fixing de la Fed**: la vela que cierra a
+  las 12:00 de Nueva York debe coincidir con el fixing (mediana ≤ 10 bps, correlación de retornos ≥ 0,9) y
+  ningún reloj desplazado ±1 h puede encajar mejor. Si algo falla, la investigación no arranca.
+- **Costes:** por cada fill se cobra el mayor entre el spread configurado y el observado en la barra.
+- **Alternativa con tu broker:** exporta las barras H1 desde MetaTrader 5 (Ver → Símbolos → Barras →
+  Exportar) a `datasets/eurusd_mt5_h1.csv` y usa `--asset EURUSD_MT5_H1`. Ajusta `server_tz` a la hora
+  del servidor (`nyclose` = UTC+2 invierno / UTC+3 verano es lo habitual); la validación cruzada detecta
+  si está mal.
+
 ## Cambiar de activo
 
 Solo hace falta un fichero en `configs/assets/`. El núcleo no cambia:
@@ -99,7 +119,8 @@ La política de red del contenedor de desarrollo solo permite `raw.githubusercon
 | VIX | CBOE vía datahub.io | Cierre posterior al fixing de NY → usable desde la barra siguiente |
 | Brent | EIA vía datahub.io | Usable desde la barra siguiente |
 
-**No disponibles** (bloqueados o inexistentes en abierto): intradía/tick (Dukascopy), FRED/ECB directos,
+**No disponibles** (bloqueados o inexistentes en abierto): intradía/tick (Dukascopy, conector listo: ver
+"Datos intradía"), FRED/ECB directos,
 calendario económico con consenso, noticias. Los conectores existen; los motores que los necesitan
 informan `INSUFFICIENT DATA`.
 
@@ -107,7 +128,8 @@ Formatos para conectar más datos:
 
 - Calendario (`econ_calendar_csv`): `timestamp,event,country,currency,importance,previous,consensus,actual`
 - Noticias (`news_csv`): `timestamp,source,headline[,body,url,asset,country]`
-- OHLCV (`csv_file`): `timestamp,open,high,low,close[,volume]`
+- OHLCV (`csv_file`): `timestamp,open,high,low,close[,volume,spread]`
+- MetaTrader 5 (`mt5_csv`): export estándar `<DATE> <TIME> <OPEN> <HIGH> <LOW> <CLOSE> <TICKVOL> <VOL> <SPREAD>`
 
 ## Limitaciones conocidas
 
