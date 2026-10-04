@@ -1,0 +1,90 @@
+# XAU/USD 5-minute bars aggregated from XAUUSD_M1 (validated), aligned to 17:00 New York.
+# History 2022-2026 only (one regime: strong gold bull market).
+asset:
+  costs:
+    commission_bps: 0.5
+    latency_bars: 0
+    slippage_bps: 1.0
+    spread_bps: 2.0
+    use_data_spread: true
+  cross_assets:
+  - availability_lag_days: 0
+    description: CBOE VIX close, usable from the end of its NY day
+    frequency: daily
+    name: vix
+    source:
+      kind: datahub_csv
+      params:
+        date_col: DATE
+        snapshot: vix_daily.csv
+        url: https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv
+        value_col: CLOSE
+    timezone: America/New_York
+    transform: level
+  - availability_lag_days: 1
+    description: Brent spot (EIA), next NY day
+    frequency: daily
+    name: brent
+    source:
+      kind: datahub_csv
+      params:
+        date_col: Date
+        snapshot: brent_daily.csv
+        url: https://raw.githubusercontent.com/datasets/oil-prices/main/data/brent-daily.csv
+        value_col: Price
+    timezone: America/New_York
+    transform: level
+  macro:
+  - availability_lag_days: 35
+    description: US CPI-U YoY (BLS), 35-day lag
+    frequency: monthly
+    name: us_cpi_yoy
+    source:
+      kind: datahub_csv
+      params:
+        date_col: Date
+        snapshot: us_cpi.csv
+        url: https://raw.githubusercontent.com/datasets/cpi-us/main/data/cpiai.csv
+        value_col: Index
+    timezone: America/New_York
+    transform: yoy
+  - availability_lag_days: 1
+    description: US 10Y yield monthly average (Fed H.15)
+    frequency: monthly
+    name: us_10y_yield
+    source:
+      kind: datahub_csv
+      params:
+        date_col: Date
+        snapshot: us_10y_monthly.csv
+        url: https://raw.githubusercontent.com/datasets/bond-yields-us-10y/main/data/monthly.csv
+        value_col: Rate
+    timezone: America/New_York
+    transform: level
+  market: metals
+  name: XAU/USD (5min)
+  price_source:
+    kind: resample_asset
+    params:
+      asset: XAUUSD_M1
+      minutes: 5
+      min_bars: 3
+      session_close: '17:00'
+      tz: America/New_York
+  splits:
+    embargo_bars: 288
+    test_end: '2025-12-31'
+    train_end: '2024-06-30'
+    validation_end: '2025-03-31'
+  symbol: XAUUSD_M5
+  timeframe: 5min
+  timezone: America/New_York
+stats:
+  horizons:
+  - 1
+  - 3
+  - 6
+  - 12
+  - 24
+  - 48
+  min_trades: 100
