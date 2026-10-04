@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -86,7 +87,40 @@ def build_primitives(bars: pd.DataFrame, exog: pd.DataFrame | None, tz: str = "U
                 for w in (60, 250):
                     P[f"x_{col}_relz{w}"] = (spread - spread.rolling(w, min_periods=int(w * 0.75)).mean()) / \
                         spread.rolling(w, min_periods=int(w * 0.75)).std()
+                P.update(divergence_features(lc, pd.Series(np.log(x), index=x.index), col))
     return {k: v.astype("float64").replace([np.inf, -np.inf], np.nan).rename(k) for k, v in P.items()}
+
+
+def divergence_features(la: pd.Series, lx: pd.Series, col: str, beta_window: int = 500) -> dict[str, pd.Series]:
+    """Divergence between the asset (log price ``la``) and a related price series (log ``lx``).
+
+    * ``x_{col}_div{k}``: k-bar asset return minus beta * the other series' k-bar return, z-scored. Beta is
+      the trailing regression slope of 1-bar returns (negative for an inverse pair such as EURUSD vs DXY),
+      so the residual is the part of the asset's move the other series did NOT explain.
+    * ``x_{col}_smt{w}`` (categorical): "SMT" divergence on closes. +1 when the asset closes below its
+      previous w-bar low but the other series does not confirm (no new low if it moves with the asset, no
+      new high if it moves inversely); -1 for the mirror case at highs; 0 otherwise. The direction of the
+      relationship is the sign of the trailing beta at that bar. Everything uses data up to the bar close.
+    """
+    ra, rx = la.diff(), lx.diff()
+    minp = int(beta_window * 0.75)
+    beta = ra.rolling(beta_window, min_periods=minp).cov(rx) / rx.rolling(beta_window, min_periods=minp).var()
+    out: dict[str, pd.Series] = {}
+    for k in (1, 5, 20):
+        resid = (la - la.shift(k)) - beta * (lx - lx.shift(k))
+        out[f"x_{col}_div{k}"] = resid / resid.rolling(250, min_periods=180).std()
+    inverse = beta < 0
+    for w in (20, 60):
+        a_lo = la < la.shift(1).rolling(w, min_periods=w).min()
+        a_hi = la > la.shift(1).rolling(w, min_periods=w).max()
+        x_lo = lx < lx.shift(1).rolling(w, min_periods=w).min()
+        x_hi = lx > lx.shift(1).rolling(w, min_periods=w).max()
+        confirm_low = np.where(inverse, x_hi, x_lo)
+        confirm_high = np.where(inverse, x_lo, x_hi)
+        smt = np.where(a_lo & ~confirm_low, 1.0, np.where(a_hi & ~confirm_high, -1.0, 0.0))
+        valid = beta.notna() & lx.shift(w).notna() & la.shift(w).notna()
+        out[f"x_{col}_smt{w}"] = pd.Series(np.where(valid, smt, np.nan), index=la.index)
+    return out
 
 
 def session_features(bars: pd.DataFrame, local: pd.DatetimeIndex, vol: pd.Series,
@@ -143,6 +177,12 @@ def _streak(r: pd.Series) -> pd.Series:
 
 
 CATEGORICAL = {"dow", "month", "dom", "hour", "bars_into_month", "sess_bar"}
+_CATEGORICAL_PATTERN = re.compile(r"_smt\d+$")
+
+
+def is_categorical(name: str) -> bool:
+    """Discrete-valued primitive: handled by bucket (==) conditions, never by quantile tails."""
+    return name in CATEGORICAL or bool(_CATEGORICAL_PATTERN.search(name))
 
 # ---------------------------------------------------------------------------------------------------
 # expression grammar
@@ -214,7 +254,7 @@ def prim(name: str) -> Expr:
 
 
 def random_expr(rng: np.random.Generator, names: list[str], max_complexity: int) -> Expr:
-    numeric = [n for n in names if n not in CATEGORICAL]
+    numeric = [n for n in names if not is_categorical(n)]
     e = prim(str(rng.choice(numeric)))
     while e.complexity < max_complexity and rng.random() < 0.7:
         if rng.random() < 0.7 or e.complexity + 2 > max_complexity:

@@ -30,7 +30,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from xquant.features.library import CATEGORICAL, Expr, evaluate
+from xquant.features.library import Expr, evaluate, is_categorical
 from xquant.logging_utils import get_logger
 from xquant.stats import benjamini_hochberg, forward_returns, hac_conditional_diff
 
@@ -124,7 +124,7 @@ class HypothesisEngine:
             if len(xd) < 200:
                 continue
             cx = self.exprs[key].complexity
-            if key in CATEGORICAL:
+            if is_categorical(key):
                 for val in sorted(xd.unique()):
                     if (xd == val).sum() >= self.min_samples:
                         for h in self.horizons:

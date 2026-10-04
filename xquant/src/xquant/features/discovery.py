@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats as sps
 
-from xquant.features.library import CATEGORICAL, Expr, evaluate, prim, random_expr
+from xquant.features.library import Expr, evaluate, is_categorical, prim, random_expr
 from xquant.logging_utils import get_logger
 from xquant.stats import benjamini_hochberg, forward_returns
 
@@ -54,10 +54,13 @@ class FeaturePool:
     confirmed: list[str] = field(default_factory=list)
     inner_split: tuple[slice, slice] = (slice(0, 0), slice(0, 0))
 
-    def hypothesis_features(self, max_n: int) -> list[str]:
-        """Features offered to the hypothesis engine: confirmed first, then primitives."""
+    def hypothesis_features(self, max_n: int, focus: list[str] | None = None) -> list[str]:
+        """Features offered to the hypothesis engine: focus matches first, then confirmed, then primitives."""
         prims = [k for k, e in self.exprs.items() if e.op == "prim"]
         ordered = list(dict.fromkeys(self.confirmed + prims))
+        if focus:
+            hit = [k for k in ordered if any(f in k for f in focus)]
+            ordered = list(dict.fromkeys(hit + ordered))
         return ordered[:max_n]
 
 
@@ -107,7 +110,7 @@ class FeatureDiscovery:
         scores: list[FeatureScore] = []
         values: dict[str, np.ndarray] = {}
         for key, e in exprs.items():
-            if key in CATEGORICAL:
+            if is_categorical(key):
                 continue  # categorical primitives are handled by bucket hypotheses, not linear IC
             try:
                 v = evaluate(e, self.prims, self.cache).to_numpy()

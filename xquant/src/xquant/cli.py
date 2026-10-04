@@ -30,7 +30,9 @@ def _overrides(args: argparse.Namespace) -> dict[str, Any]:
     if getattr(args, "memory", None):
         o["research"]["memory_path"] = args.memory
     if getattr(args, "min_trades_per_day", None):
-        o["stats"] = {"min_trades_per_day": args.min_trades_per_day}
+        o.setdefault("stats", {})["min_trades_per_day"] = args.min_trades_per_day
+    if getattr(args, "focus", None):
+        o.setdefault("stats", {})["focus"] = args.focus
     if getattr(args, "max_minutes", None):
         mode = getattr(args, "mode", None) or "standard"
         o["budgets"] = {mode: {"max_compute_minutes": args.max_minutes}}
@@ -122,6 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--offline", action="store_true")
     r.add_argument("--max-minutes", type=float, help="override the mode's compute budget (stops gracefully)")
     r.add_argument("--min-trades-per-day", type=float, help="require at least this trading frequency")
+    r.add_argument("--focus", nargs="+", help="feature-name substrings to test first (e.g. x_px_dxy)")
     r.set_defaults(fn=cmd_research)
     db = sub.add_parser("dashboard", help="render or serve the dashboard")
     db.add_argument("--serve", action="store_true")

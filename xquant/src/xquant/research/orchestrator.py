@@ -30,7 +30,7 @@ from xquant.data.engine import DataEngine, MarketDataset
 from xquant.errors import DataQualityError, DataUnavailableError, InsufficientDataError, XQuantError
 from xquant.evolution.engine import EvolutionEngine
 from xquant.features.discovery import FeatureDiscovery, FeaturePool
-from xquant.features.library import CATEGORICAL, assert_causal, build_primitives, evaluate, prim
+from xquant.features.library import assert_causal, build_primitives, evaluate, is_categorical, prim
 from xquant.findings import Finding
 from xquant.hypothesis.engine import Hypothesis, HypothesisEngine
 from xquant.logging_utils import get_logger
@@ -303,7 +303,7 @@ class ResearchOrchestrator:
                               self.cfg.stats.quantiles, self.cfg.stats.fdr_alpha, self.cfg.stats.min_samples,
                               self.cfg.stats.min_effect_size, regimes, ctx.cache,
                               period=f"{ds.bars.index[disc.start].date()} to {ds.bars.index[disc.stop - 1].date()}")
-        feats = pool.hypothesis_features(self.budget.max_features)
+        feats = pool.hypothesis_features(self.budget.max_features, self.cfg.stats.focus)
         hyps = he.generate(feats, with_regimes=False)[: self.budget.max_hypotheses]
         known = self.memory.known_hypotheses(self.asset, self.dv)
         new = [h for h in hyps if h.signature not in known]
@@ -346,7 +346,7 @@ class ResearchOrchestrator:
 
     def _line_setup(self, line: str, pool: FeaturePool, validated: list[Hypothesis],
                     regime_model: RegimeModel | None) -> tuple[list[str], list[Genome], int] | str:
-        feats = pool.hypothesis_features(self.budget.max_features)
+        feats = pool.hypothesis_features(self.budget.max_features, self.cfg.stats.focus)
         n_reg = regime_model.k if regime_model else 0
         if line == "hypothesis_seeded":
             if not validated:
@@ -372,8 +372,8 @@ class ResearchOrchestrator:
         states = {name: LineState(name) for name in LINES}
         categorical = {}
         train = splits.slice("train")
-        for f in CATEGORICAL:
-            if f in ctx.prims:
+        for f in ctx.prims:
+            if is_categorical(f):
                 vals = ctx.prims[f].iloc[train].dropna().unique()
                 categorical[f] = sorted(float(v) for v in vals)
         dossiers: list[Dossier] = []

@@ -108,6 +108,9 @@ class StatsSpec(BaseModel):
     quantiles: list[float] = Field(default_factory=lambda: [0.1, 0.2, 0.8, 0.9])
     bootstrap_reps: int = 1000
     min_effect_size: float = 0.05  # |mean diff| / unconditional std of the forward return
+    # Feature-name substrings tested FIRST (hypothesis and feature budgets are capped, so a targeted
+    # question - e.g. "x_px_dxy" - must not be crowded out). Ordering only: thresholds are unchanged.
+    focus: list[str] = Field(default_factory=list)
 
 
 class RobustnessSpec(BaseModel):
