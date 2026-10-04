@@ -83,7 +83,7 @@ class DukascopyCandleSource(DataSource):
 
     def __init__(self, instrument: str, start: str, end: str, granularity: str = "hour", point: float = 1e-5,
                  expected_range: list[float] | None = None, workers: int = 1, retries: int = 7,
-                 min_interval: float = 3.0,
+                 min_interval: float = 1.0,
                  fetch: FetchFn | None = None, cache_dir: Path | None = None, **extra: Any) -> None:
         super().__init__(instrument=instrument, start=start, end=end, granularity=granularity, point=point)
         if granularity not in GRANULARITY:
@@ -97,8 +97,8 @@ class DukascopyCandleSource(DataSource):
         self.min_interval = min_interval
         self._pace_lock = threading.Lock()
         self._next_slot = 0.0
-        from xquant.data.sources.builtin import http_get
-        self._fetch = fetch or http_get
+        self._fetch = fetch or self._session_get
+        self._local = threading.local()
         self.cache_dir = (cache_dir or CACHE_DIR) / "dukascopy_candles" / self.instrument / granularity
         self.provenance: dict[str, Any] = {}
 
@@ -160,6 +160,16 @@ class DukascopyCandleSource(DataSource):
                     raise
                 time.sleep(10.0 * (attempt + 1))
         return None
+
+    def _session_get(self, url: str) -> bytes:
+        """Keep-alive download (one session per thread). The feed throttles new connections far more
+        than requests on an open one: with reuse, responses are slow but do not fail."""
+        import requests
+
+        from xquant.data.sources.builtin import http_get
+        if not hasattr(self._local, "session"):
+            self._local.session = requests.Session()
+        return http_get(url, timeout=90.0, session=self._local.session)
 
     def _pace(self) -> None:
         if self.min_interval <= 0:

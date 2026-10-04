@@ -28,9 +28,10 @@ from xquant.logging_utils import get_logger
 log = get_logger("data.sources")
 
 
-def http_get(url: str, timeout: float = 60.0) -> bytes:
+def http_get(url: str, timeout: float = 60.0, session: requests.Session | None = None) -> bytes:
     try:
-        resp = requests.get(url, timeout=timeout, headers={"User-Agent": "xquant-research/0.1"})
+        getter = session.get if session is not None else requests.get
+        resp = getter(url, timeout=timeout, headers={"User-Agent": "xquant-research/0.1"})
     except requests.RequestException as exc:
         raise DataUnavailableError(f"cannot reach {url}: {exc}") from exc
     if resp.status_code == 404:
