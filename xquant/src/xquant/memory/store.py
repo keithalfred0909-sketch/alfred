@@ -254,8 +254,8 @@ class ResearchMemory:
                 d = json.loads(r["dossier"] or "{}")
                 eq = d.get("equity") or {}
                 n = len(eq.get("combined") or [])
-                if n > max_points:
-                    step = n // max_points
+                step = n // max_points
+                if step > 1:
                     d["equity"] = {k: v[::step] for k, v in eq.items()}
                     c.execute("UPDATE strategies SET dossier=? WHERE id=?", (_j(d), r["id"]))
                     changed += 1
