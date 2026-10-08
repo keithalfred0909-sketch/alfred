@@ -1,0 +1,34 @@
+{
+ "as_of": "2026-10-08T08:56:29+00:00",
+ "lab": "OFFLINE (no live worker)",
+ "active_agents": 0,
+ "agents": [],
+ "running_jobs": [],
+ "jobs": {
+  "DONE": 2
+ },
+ "jobs_by_department": {
+  "data_mining:DONE": 1,
+  "research_memory:DONE": 1
+ },
+ "research_runs": {
+  "ABORTED": 1,
+  "EDGE FOUND (provisional)": 1,
+  "FAILED": 1,
+  "NO EDGE FOUND": 36
+ },
+ "hypotheses": {
+  "OVERFIT": 152,
+  "REJECTED": 51504,
+  "VALIDATION": 98
+ },
+ "strategies": {
+  "OVERFIT": 84,
+  "REJECTED": 789
+ },
+ "experiments": 374,
+ "preregistrations": {
+  "EDGE FOUND (provisional)": 1,
+  "NO EDGE FOUND": 8
+ }
+}

@@ -139,6 +139,48 @@ def cmd_ml(args: argparse.Namespace) -> int:
     return 0
 
 
+def _lab_db(args: argparse.Namespace) -> str:
+    return args.memory or str(PROJECT_ROOT / load_config("EURUSD").research.memory_path)
+
+
+def cmd_queue(args: argparse.Namespace) -> int:
+    from xquant.lab.queue import Queue
+    q = Queue(_lab_db(args))
+    if args.action == "add":
+        params: dict[str, Any] = {k: v for k, v in {"asset": args.asset, "spec": args.spec, "mode": args.mode,
+                                                    "max_minutes": args.max_minutes, "focus": args.focus}.items() if v}
+        if args.online:
+            params["offline"] = False
+        jid, created = q.add(args.kind, params, priority=args.priority, depends_on=args.depends or [],
+                             reason=args.reason or "", force=args.force)
+        print(f"{jid} {'queued' if created else 'already exists (duplicate refused; use --force to repeat)'}")
+    elif args.action == "list":
+        for j in q.jobs(args.status, args.limit):
+            print(f"{j['id']} {j['status']:9s} p{j['priority']} {j['department']:16s} {j['kind']:9s} {j['params']} "
+                  f"attempts {j['attempts']}/{j['max_attempts']} {(j['error'] or '').splitlines()[-1:] if j['error'] else ''}")
+    elif args.action == "cancel":
+        print("cancelled" if q.cancel(args.job) else "not cancelled (only QUEUED jobs can be cancelled)")
+    q.close()
+    return 0
+
+
+def cmd_worker(args: argparse.Namespace) -> int:
+    from xquant.lab.queue import run_worker
+    counts = run_worker(_lab_db(args), department=args.department, max_jobs=args.max_jobs, idle_exit_s=args.idle_exit,
+                        stale_after_s=args.stale_after)
+    print(json.dumps(counts))
+    return 0
+
+
+def cmd_lab(args: argparse.Namespace) -> int:
+    from xquant.lab.queue import lab_status
+    st = lab_status(_lab_db(args))
+    out = PROJECT_ROOT / "research_output" / "lab_status.json"
+    out.write_text(json.dumps(st, indent=1, default=str), encoding="utf-8")
+    print(json.dumps(st, indent=1, default=str))
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -228,6 +270,35 @@ def main(argv: list[str] | None = None) -> int:
     ml.add_argument("--offline", action="store_true")
     ml.add_argument("--memory")
     ml.set_defaults(fn=cmd_ml)
+    qu = sub.add_parser("queue", help="research queue: add / list / cancel jobs")
+    qu.add_argument("action", choices=["add", "list", "cancel"])
+    qu.add_argument("kind", nargs="?", help="add: research|confirm|allocate|daytrade|ml|data|compact")
+    qu.add_argument("--asset")
+    qu.add_argument("--spec")
+    qu.add_argument("--mode", choices=["quick", "standard", "deep"])
+    qu.add_argument("--max-minutes", type=float)
+    qu.add_argument("--focus", nargs="+")
+    qu.add_argument("--online", action="store_true", help="allow downloads (default: cached data only)")
+    qu.add_argument("--priority", default="NORMAL", choices=["URGENT", "HIGH_VALUE", "NORMAL", "EXPLORATORY", "LOW"])
+    qu.add_argument("--depends", nargs="+", help="job ids that must be DONE first")
+    qu.add_argument("--reason", help="why this experiment (kept in the job record)")
+    qu.add_argument("--force", action="store_true", help="queue even if an identical job exists")
+    qu.add_argument("--job", help="cancel: job id")
+    qu.add_argument("--status", help="list: filter by status")
+    qu.add_argument("--limit", type=int, default=50)
+    qu.add_argument("--memory")
+    qu.set_defaults(fn=cmd_queue)
+    wk = sub.add_parser("worker", help="run a worker (agent) that executes queued jobs")
+    wk.add_argument("--department", help="only take jobs of this department")
+    wk.add_argument("--max-jobs", type=int)
+    wk.add_argument("--idle-exit", type=float, default=0.0, help="exit after this many idle seconds (0 = never)")
+    wk.add_argument("--stale-after", type=int, default=300, help="seconds without heartbeat before a job is recovered")
+    wk.add_argument("--memory")
+    wk.set_defaults(fn=cmd_worker)
+    lb = sub.add_parser("lab", help="real lab status (agents, jobs, research counts) -> research_output/lab_status.json")
+    lb.add_argument("action", choices=["status"])
+    lb.add_argument("--memory")
+    lb.set_defaults(fn=cmd_lab)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")

@@ -49,7 +49,7 @@ Datos quemados (TEST/FINAL ya abiertos): NAS100 minuto (2023-07→2026-09) por n
 | R2 | `memory.db` (37 MB) + informes (23 MB) en git; límite GitHub 100 MB/fichero | CRITICAL | Mismo almacenamiento que R1; mitigado con compactación |
 | R3 | SplitGuard por ejecución: TEST/FINAL de un mismo dato pueden reabrirse en ejecuciones o configs distintas | CRITICAL (integridad) | HECHO 2026-10-08: tabla `protected_access` por `bars:<sha>`; un EDGE con FINAL reutilizado se etiqueta "not clean OOS" |
 | R4 | N del Deflated Sharpe por símbolo de config: EURUSD_H1, _RV, _DXY comparten precios pero cuentan ensayos por separado | HIGH (integridad) | HECHO 2026-10-08: familias `FAMILY:bars:<sha>` (backfill: EUR/USD H1 = 210.973 ensayos, oro H1 = 169.293); DSR usa el mayor N |
-| R5 | Sin cola/runner persistente, sin reintentos/heartbeat: un proceso muerto pierde el trabajo (solo queda el run FAILED) | HIGH | Construir (Fase 3) |
+| R5 | Sin cola/runner persistente, sin reintentos/heartbeat | HIGH | HECHO 2026-10-08: `lab/queue.py` (tablas `jobs`, `workers` en memory.db): prioridades, dependencias, dedupe, subproceso por trabajo, timeout, reintentos con back-off, recuperación de workers muertos; CLI `queue add/list/cancel`, `worker`, `lab status` (→ `research_output/lab_status.json`) |
 | R6 | Sin Director entre ejecuciones: cada estudio lo decide un humano/Claude | HIGH | Construir (Fase 7) sobre la cola |
 | R7 | Sin genealogía de estrategias (padres, mutaciones) | MEDIUM | IMPROVE genome/memoria |
 | R8 | Macro sin consenso, News sin fuente | MEDIUM (bloqueado por datos) | Requiere fuente externa |
@@ -65,10 +65,8 @@ NOT NEEDED: Canva, Higgsfield, Notion, Gmail, Calendar, Drive para la investigac
 Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 
 ## 6. Roadmap priorizado
-- **F3 Foundation** (en curso): ~~R3~~ ~~R4~~ (hechos) → cola de trabajos
-  persistente (jobs: id, departamento, prioridad, estado, dependencias, coste, reintentos, heartbeat) + runner con
-  timeout/reintentos (self-healing) → estado JSON del laboratorio (agentes = workers reales, sin actividad inventada).
-- F7 Director determinista sobre la cola (huecos de investigación desde la memoria, sin duplicados, presupuestos).
+- **F3 Foundation**: ~~R3~~ ~~R4~~ ~~cola + runner + estado real~~ (hechos). Pendiente: almacenamiento persistente (R1/R2, decisión del usuario: bucket GCS recomendado, variables `XQUANT_GCS_BUCKET`, `XQUANT_GCS_KEY_JSON`).
+- **Siguiente: F7 Director** determinista sobre la cola (huecos de investigación desde la memoria, sin duplicados, presupuestos).
 - F5/F6 genealogía + vistas Hall of Fame / Cementerio (estados DISCOVERED…DESTROYED mapeados desde la memoria).
 - F8 Control Center/Observer conectado al estado real. F4 macro/news cuando haya datos. F9 campaña EUR/USD.
 - DEFER: UI 3D, agentes LLM, RL, ejecución real (prohibida).
@@ -78,3 +76,7 @@ Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 - Hipótesis dirigidas: pre-registro antes de mirar datos (spec + SHA-256 en git). Exploración: N acumulado.
 - "Agentes" = workers deterministas registrados en la cola (estado real). LLM opcional y posterior.
 - Descargar solo lo necesario (solo BID cuando los costes son fijos).
+
+## 8. Uso rápido de la cola
+`xquant queue add research --asset EURUSD_H1 --max-minutes 30 --priority EXPLORATORY --reason "..."` · `xquant worker --idle-exit 600` · `xquant lab status`.
+Tipos: research, confirm, allocate, daytrade, ml (`--spec`), data (`--online` para descargar), compact. Logs: `runs/jobs/`.
