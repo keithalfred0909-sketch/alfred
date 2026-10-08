@@ -47,6 +47,8 @@ class Genome:
     regime: int | None = None
     origin: str = "random"
     trail: float | None = None
+    parents: tuple[str, ...] = ()  # signatures of the parent genome(s); not part of key()/signature
+    mutation: str = ""  # what changed vs the parent
 
     def key(self) -> str:
         conds = "&".join(sorted(c.key() for c in self.conditions))
@@ -84,7 +86,8 @@ class Genome:
     def from_dict(d: dict[str, Any]) -> Genome:
         return Genome(conditions=tuple(Condition(**c) for c in d["conditions"]), direction=int(d["direction"]),
                       hold=int(d["hold"]), stop=d.get("stop"), take=d.get("take"), regime=d.get("regime"),
-                      origin=d.get("origin", "random"), trail=d.get("trail"))
+                      origin=d.get("origin", "random"), trail=d.get("trail"),
+                      parents=tuple(d.get("parents") or ()), mutation=d.get("mutation", ""))
 
 
 @dataclass

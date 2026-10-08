@@ -124,11 +124,29 @@ class EvolutionEngine:
         ind.details["neighbour_fitness"] = vals[1:]
         return float(np.mean(vals))
 
+    def ancestry(self, g: Genome, max_depth: int = 40) -> list[dict[str, Any]]:
+        """Genealogy of ``g`` through the genomes this run evaluated: [{signature, origin, mutation, rules, fitness}]."""
+        by_sig = {ind.genome.signature: ind for ind in self.cache.values()}
+        out: list[dict[str, Any]] = []
+        frontier, seen = [g], set()
+        while frontier and len(out) < max_depth:
+            cur = frontier.pop(0)
+            if cur.signature in seen:
+                continue
+            seen.add(cur.signature)
+            ind = by_sig.get(cur.signature)
+            out.append({"signature": cur.signature, "origin": cur.origin, "mutation": cur.mutation,
+                        "parents": list(cur.parents), "rules": cur.describe(),
+                        "fitness": None if ind is None or not math.isfinite(ind.fitness) else round(ind.fitness, 4)})
+            frontier += [by_sig[p].genome for p in cur.parents if p in by_sig]
+        return out
+
     # ---- operators -------------------------------------------------------------------------------
     def _random(self) -> Genome:
         return random_genome(self.rng, self.features, self.categorical, self.max_cond, self.n_regimes)
 
     def mutate(self, g: Genome) -> Genome:
+        parent = g
         r = self.rng.random()
         conds = list(g.conditions)
         if r < 0.25 and conds:
@@ -162,7 +180,13 @@ class EvolutionEngine:
             g = replace(g, direction=-g.direction)
         elif self.n_regimes:
             g = replace(g, regime=None if g.regime is not None else int(self.rng.integers(self.n_regimes)))
-        return replace(g, origin="mutation")
+        what = ("tail/side" if r < 0.25 else "feature" if r < 0.40 else "hold" if r < 0.55 else "stop" if r < 0.65
+                else "take" if r < 0.72 else "trail" if r < 0.76 else "add condition" if r < 0.82
+                else "drop condition" if r < 0.90 else "direction" if r < 0.95 else "regime")
+        if parent.key() in self.cache:  # evaluated parent: link to it
+            return replace(g, origin="mutation", parents=(parent.signature,), mutation=what)
+        # unevaluated intermediate (e.g. a fresh crossover child): keep its parents, chain the change description
+        return replace(g, origin="mutation", parents=parent.parents, mutation=f"{parent.mutation}+{what}".strip("+"))
 
     def crossover(self, a: Genome, b: Genome) -> Genome:
         pool = list({c.feature: c for c in a.conditions + b.conditions}.values())
@@ -171,7 +195,8 @@ class EvolutionEngine:
         src = a if self.rng.random() < 0.5 else b
         return Genome(conditions=tuple(pool[:n]), direction=src.direction,
                       hold=(a if self.rng.random() < 0.5 else b).hold, stop=(a if self.rng.random() < 0.5 else b).stop,
-                      take=(a if self.rng.random() < 0.5 else b).take, regime=src.regime, origin="crossover")
+                      take=(a if self.rng.random() < 0.5 else b).take, regime=src.regime, origin="crossover",
+                      parents=(a.signature, b.signature), mutation="crossover")
 
     def _tournament(self, pop: list[Individual], k: int = 3) -> Individual:
         picks = self.rng.choice(len(pop), size=min(k, len(pop)), replace=False)

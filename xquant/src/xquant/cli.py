@@ -225,6 +225,23 @@ def cmd_autonomous(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_hq(args: argparse.Namespace) -> int:
+    from xquant.lab.hq import strategy_hq
+    from xquant.memory.store import ResearchMemory
+    hq = strategy_hq(ResearchMemory(_lab_db(args)), top=args.top)
+    (PROJECT_ROOT / "research_output" / "strategy_hq.json").write_text(json.dumps(hq, indent=1, default=str))
+    print("TIERS", hq["tiers"])
+    fame = hq["hall_of_fame"]
+    print("HALL OF FAME:", fame if isinstance(fame, str) else "")
+    for f in fame if isinstance(fame, list) else []:
+        print(f"  {f['tier']:12s} {f['id']} [{f['asset']}] {f['rules']}")
+    cem = hq["cemetery"]
+    print(f"CEMETERY: {cem['buried']} buried; causes (any): {cem['causes_any']}")
+    for c in cem["recent"]:
+        print(f"  {c['id']} [{c['asset']}] died of {c['died_of']} - {c['rules'][:90]}")
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -354,6 +371,10 @@ def main(argv: list[str] | None = None) -> int:
     au.add_argument("--max-new", type=int, default=3)
     au.add_argument("--memory")
     au.set_defaults(fn=cmd_autonomous)
+    hqp = sub.add_parser("hq", help="Strategy HQ: tiers, Hall of Fame, Cemetery (-> research_output/strategy_hq.json)")
+    hqp.add_argument("--top", type=int, default=10)
+    hqp.add_argument("--memory")
+    hqp.set_defaults(fn=cmd_hq)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")

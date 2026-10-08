@@ -1,0 +1,81 @@
+{
+ "tiers": {
+  "DESTROYED": 878,
+  "VALIDATED": 1
+ },
+ "hall_of_fame": [
+  {
+   "id": "nq_orb5_v2",
+   "asset": "DAYTRADE:NAS100",
+   "tier": "VALIDATED (provisional, pre-registered study)",
+   "rules": "see report of RUN-00035",
+   "score": null,
+   "verdict": "EDGE FOUND (provisional)"
+  }
+ ],
+ "cemetery": {
+  "buried": 878,
+  "causes_any": {
+   "deflated_sharpe": 878,
+   "probability_backtest_overfitting": 770,
+   "few_trades_dependence": 651,
+   "out_of_sample_validation": 526,
+   "walk_forward": 111,
+   "other_years": 98,
+   "schedule_dependence": 77,
+   "beats_random_entries": 72,
+   "entry_displacement": 65,
+   "spread_slippage_x2": 52,
+   "monte_carlo_loss_probability": 51,
+   "other_regimes": 42
+  },
+  "first_listed_cause": {
+   "out_of_sample_validation": 526,
+   "few_trades_dependence": 217,
+   "deflated_sharpe": 84,
+   "walk_forward": 17,
+   "beats_random_entries": 16,
+   "other_years": 6,
+   "entry_displacement": 5,
+   "spread_slippage_x2": 5
+  },
+  "recent": [
+   {
+    "id": "STR-000874",
+    "asset": "NAS100_M30",
+    "rules": "LONG when sess_pos in top 20%; exit after 20 bars, trailing stop 0.5 x vol x sqrt(hold) from best close",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:08:26+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000875",
+    "asset": "NAS100_M30",
+    "rules": "LONG when sess_pos in top 20% AND streak in top 20%; exit after 20 bars, stop 0.5 x vol x sqrt(hold)",
+    "died_of": [
+     "out_of_sample_validation",
+     "beats_random_entries",
+     "few_trades_dependence"
+    ],
+    "at": "2026-10-08T09:08:26+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000876",
+    "asset": "NAS100_M30",
+    "rules": "LONG when wvwap_z in top 20% AND sess_pos in top 10%; exit after 15 bars, stop 0.5 x vol x sqrt(hold)",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:08:26+00:00",
+    "lineage_depth": 0
+   }
+  ]
+ }
+}

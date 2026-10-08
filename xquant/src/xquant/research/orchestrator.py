@@ -431,6 +431,7 @@ class ResearchOrchestrator:
                         skipped += 1
                         continue
                     d = adv.examine(g, n_trials, var, pbo)
+                    d.lineage = eng.ancestry(g)
                     d.score = score(d, round_trip)
                     self.examined += 1
                     examined_here.append(d)

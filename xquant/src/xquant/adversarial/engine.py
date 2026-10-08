@@ -64,6 +64,7 @@ class Dossier:
     reasons: list[str] = field(default_factory=list)
     score: float = float("nan")
     equity: dict[str, list[Any]] = field(default_factory=dict)
+    lineage: list[dict[str, Any]] = field(default_factory=list)  # genealogy (evolution ancestry)
 
     @property
     def passed_attacks(self) -> int:
@@ -95,7 +96,8 @@ class Dossier:
                       "train": self.train, "validation": self.validation, "test": self.test, "final": self.final,
                       "walk_forward": {k: v for k, v in self.walk_forward.items() if k != "returns"},
                       "monte_carlo": self.monte_carlo, "robustness": self.robustness, "overfit": self.overfit,
-                      "attacks": [a.to_dict() for a in self.attacks], "equity": self.equity})
+                      "attacks": [a.to_dict() for a in self.attacks], "equity": self.equity,
+                      "lineage": self.lineage})
 
 
 class AdversarialEngine:

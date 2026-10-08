@@ -51,7 +51,7 @@ Datos quemados (TEST/FINAL ya abiertos): NAS100 minuto (2023-07→2026-09) por n
 | R4 | N del Deflated Sharpe por símbolo de config: EURUSD_H1, _RV, _DXY comparten precios pero cuentan ensayos por separado | HIGH (integridad) | HECHO 2026-10-08: familias `FAMILY:bars:<sha>` (backfill: EUR/USD H1 = 210.973 ensayos, oro H1 = 169.293); DSR usa el mayor N |
 | R5 | Sin cola/runner persistente, sin reintentos/heartbeat | HIGH | HECHO 2026-10-08: `lab/queue.py` (tablas `jobs`, `workers` en memory.db): prioridades, dependencias, dedupe, subproceso por trabajo, timeout, reintentos con back-off, recuperación de workers muertos; CLI `queue add/list/cancel`, `worker`, `lab status` (→ `research_output/lab_status.json`) |
 | R6 | Sin Director entre ejecuciones | HIGH | HECHO 2026-10-08: `lab/director.py` (specs sin evaluar → huecos de cobertura por fuente de precios → seguimiento deep con evidencia → mantenimiento; nunca descarga; fallos repetidos → humano). CLI `director plan|run`, `autonomous --cycles --max-hours --max-new` |
-| R7 | Sin genealogía de estrategias (padres, mutaciones) | MEDIUM | IMPROVE genome/memoria |
+| R7 | Sin genealogía de estrategias | MEDIUM | HECHO 2026-10-08: `Genome.parents/mutation` (fuera de la clave), `EvolutionEngine.ancestry`, `dossier.lineage` en cada estrategia examinada. Strategy HQ: `xquant hq` (tiers, Hall of Fame, Cementerio con causa de muerte; también en `lab status`) |
 | R8 | Macro sin consenso, News sin fuente | MEDIUM (bloqueado por datos) | Requiere fuente externa |
 | R9 | `run_orb`/GA en Python puro: lento a escala | LOW | DEFER |
 | R10 | Dashboard estático, sin estado en vivo | MEDIUM | Fase 8 tras API de estado |
@@ -67,7 +67,7 @@ Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 ## 6. Roadmap priorizado
 - **F3 Foundation**: ~~R3~~ ~~R4~~ ~~cola + runner + estado real~~ (hechos). Pendiente: almacenamiento persistente (R1/R2, decisión del usuario: bucket GCS recomendado, variables `XQUANT_GCS_BUCKET`, `XQUANT_GCS_KEY_JSON`).
 - ~~F7 Director~~ (hecho). Ledger con linaje: datos remuestreados (M30←M1) comparten la clave de sus splits protegidos.
-- F5/F6 genealogía + vistas Hall of Fame / Cementerio (estados DISCOVERED…DESTROYED mapeados desde la memoria).
+- ~~F5/F6 genealogía + Hall of Fame / Cementerio~~ (hecho). Siguiente: alertas + Control Center conectado (`lab_status.json`, `strategy_hq.json`).
 - F8 Control Center/Observer conectado al estado real. F4 macro/news cuando haya datos. F9 campaña EUR/USD.
 - DEFER: UI 3D, agentes LLM, RL, ejecución real (prohibida).
 

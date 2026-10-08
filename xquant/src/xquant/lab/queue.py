@@ -328,5 +328,11 @@ def lab_status(db: str | Path, stale_after_s: int = 300) -> dict[str, Any]:
            "strategies": table("SELECT status, COUNT(*) FROM strategies GROUP BY status"),
            "experiments": sum(table("SELECT 'n', COUNT(*) FROM experiments").values()),
            "preregistrations": table("SELECT COALESCE(verdict, 'PENDING'), COUNT(*) FROM preregistrations GROUP BY 1")}
+    try:
+        from xquant.lab.hq import strategy_hq
+        from xquant.memory.store import ResearchMemory
+        out["strategy_tiers"] = strategy_hq(ResearchMemory(db), top=0)["tiers"]
+    except Exception as exc:  # status must never fail because of the HQ view
+        out["strategy_tiers"] = f"unavailable: {type(exc).__name__}"
     q.close()
     return out
