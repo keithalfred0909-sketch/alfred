@@ -1,0 +1,8 @@
+{
+  "url": "https://raw.githubusercontent.com/datasets/gold-prices/main/data/monthly.csv",
+  "raw_sha256": "f5945c29f746ff14e54acd635dcbb43dbe9f4706f22d6ac8c5d7c3b7908ebcf5",
+  "rows": 2325,
+  "downloaded_at": "2026-10-04T08:16:36+00:00",
+  "filter": null,
+  "snapshot_sha256": "7bc7fed54abbd069074f966adbc0e1b9eb63b7c27d87e2259d3102dd3b4e7726"
+}

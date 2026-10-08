@@ -1,0 +1,12 @@
+# Template: BTC/USD. Provide an OHLCV file (no BTC source is reachable from the development container).
+asset:
+  symbol: BTCUSD
+  name: BTC/USD
+  market: crypto
+  timeframe: 1h
+  timezone: UTC
+  price_source:
+    kind: csv_file
+    params: {path: datasets/btcusd_1h.csv, timestamp_col: timestamp, tz: UTC}
+  costs: {spread_bps: 4.0, commission_bps: 5.0, slippage_bps: 3.0, latency_bars: 0}
+  splits: {train_end: 2021-12-31, validation_end: 2022-12-31, test_end: 2023-12-31, embargo_bars: 48}

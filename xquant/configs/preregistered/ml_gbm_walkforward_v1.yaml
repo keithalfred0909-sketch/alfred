@@ -1,0 +1,36 @@
+# PRE-REGISTRATION (machine learning, walk-forward) - do not edit after evaluation; the lab stores the SHA-256.
+name: ml_gbm_walkforward_v1
+registered_by: X-QUANT, 2026-10-04, before the ML engine exists and before any ML outcome was computed
+hypothesis: A gradient-boosting classifier trained only on past data, using the lab's generic causal feature set,
+  predicts the sign of the next 6-bar (6 h) return well enough that trading its most confident predictions is profitable
+  after costs.
+rationale: 'Different model class from the rule-based search: combines ~100 features non-linearly instead of 1-3
+  conditions. Highest overfitting risk of all approaches, controlled here by a strict walk-forward: every prediction
+  comes from a model fitted only on earlier years. Caveat declared in advance: the feature set was designed by this
+  lab, which has explored these assets before (feature definitions were not tuned on outcomes).'
+assets:
+- EURUSD_H1
+- XAUUSD_H1
+- NAS100_H1_NQ
+model:
+  class: sklearn HistGradientBoostingClassifier
+  max_depth: 3
+  learning_rate: 0.05
+  max_iter: 200
+  l2_regularization: 1.0
+  early_stopping: false
+  random_state: 0
+features: every primitive from build_primitives (prices + exogenous series of the asset config), categorical ones
+  as numbers; NaN handled natively
+target: 1 if log(close[t+6]/close[t]) > 0 else 0
+walk_forward: expanding window; retrain on 1 January of each year using bars up to 6 bars before the year start
+  (purge); first prediction year = 3 full years after the data start; predictions for each year come only from the
+  model trained before it
+trading_rule: 'long when p >= 90th percentile of the model''s in-sample predicted probabilities, short when p <=
+  10th percentile (thresholds from the training data of that model); entry at the next bar open, exit after hold=6
+  bars (lab convention: close of bar f+6); one position per side at a time; the asset config''s costs'
+splits: each asset config's own TRAIN/VALIDATION/TEST/FINAL dates
+pass_rule: 'per asset, on the walk-forward predictions inside TRAIN+VALIDATION: combined long+short per-bar returns
+  with Sharpe > 0 and stationary-bootstrap 95% CI lower bound > 0, deflated Sharpe >= 0.95 with N = 3 (one per asset),
+  >= 50% profitable years, still positive at 2x costs; then TEST once (Sharpe > 0), then FINAL once for the best
+  asset'

@@ -1,0 +1,34 @@
+# X-QUANT default configuration. Asset files in configs/assets/ override any key here.
+research:
+  seed: 42
+  mode: standard            # quick | standard | deep
+  runs_dir: runs
+  memory_path: research_output/memory.db
+
+budgets:
+  quick:     {max_experiments: 30,   max_generations: 6,   population: 40,  max_compute_minutes: 10,  max_strategies: 10, max_complexity: 3, max_features: 120, max_hypotheses: 1500, patience: 2, max_line_failures: 2}
+  standard:  {max_experiments: 200,  max_generations: 25,  population: 120, max_compute_minutes: 90,  max_strategies: 30, max_complexity: 4, max_features: 400, max_hypotheses: 6000, patience: 4, max_line_failures: 3}
+  deep:      {max_experiments: 5000, max_generations: 200, population: 300, max_compute_minutes: 720, max_strategies: 80, max_complexity: 5, max_features: 1500, max_hypotheses: 40000, patience: 12, max_line_failures: 6}
+
+stats:
+  fdr_alpha: 0.05           # Benjamini-Hochberg false discovery rate across every test in an experiment
+  min_samples: 40
+  min_trades: 30
+  horizons: [1, 3, 5, 10, 20]
+  quantiles: [0.1, 0.2, 0.8, 0.9]
+  bootstrap_reps: 1000
+  min_effect_size: 0.05
+
+robustness:
+  param_perturbation: 0.25
+  min_param_stability: 0.6
+  cost_stress_multipliers: [2.0, 3.0]
+  random_entry_reps: 500
+  max_random_entry_pvalue: 0.05
+  max_top_trade_share: 0.5
+  min_profitable_year_share: 0.5
+  min_deflated_sharpe_prob: 0.95
+  mc_reps: 1000
+  wf_windows: 6
+  noise_vol_fraction: 0.1
+  max_pbo: 0.5

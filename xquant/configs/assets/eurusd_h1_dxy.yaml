@@ -1,0 +1,136 @@
+# EURUSD_H1 + US Dollar Index: synthetic DXY (ICE formula, 6 Dukascopy pairs) and a dollar index ex-EUR,
+# both as same-bar cross-assets. Enables divergence features x_px_*_div{1,5,20} and SMT divergence x_px_*_smt{20,60}.
+# focus: these features are tested first so the hypothesis budget cannot crowd them out.
+asset:
+  symbol: EURUSD_H1_DXY
+  name: EUR/USD (1h) + US Dollar Index divergence
+  market: fx
+  timeframe: 1h
+  timezone: America/New_York
+  price_source:
+    kind: dukascopy_candles
+    params:
+      instrument: EURUSD
+      start: '2005-01-01'
+      end: '2026-10-01'
+      granularity: hour
+      point: 1.0e-05
+      expected_range:
+      - 0.8
+      - 1.8
+  cross_check:
+    asset: EURUSD
+    local_time: '12:00'
+    tz: America/New_York
+    max_median_bps: 10
+    min_return_corr: 0.9
+  costs:
+    spread_bps: 0.8
+    commission_bps: 0.35
+    slippage_bps: 0.3
+    latency_bars: 0
+    use_data_spread: true
+  splits:
+    train_end: 2016-12-31
+    validation_end: 2019-12-31
+    test_end: 2022-12-31
+    embargo_bars: 120
+  macro:
+  - name: us_cpi_yoy
+    description: US CPI-U YoY (BLS). Released ~2 weeks after month end; conservative
+      35-day lag.
+    frequency: monthly
+    timezone: America/New_York
+    availability_lag_days: 35
+    transform: yoy
+    source:
+      kind: datahub_csv
+      params:
+        url: https://raw.githubusercontent.com/datasets/cpi-us/main/data/cpiai.csv
+        date_col: Date
+        value_col: Index
+        snapshot: us_cpi.csv
+  - name: us_10y_yield
+    description: US 10Y yield, monthly average (Fed H.15). Known at month end.
+    frequency: monthly
+    timezone: America/New_York
+    availability_lag_days: 1
+    transform: level
+    source:
+      kind: datahub_csv
+      params:
+        url: https://raw.githubusercontent.com/datasets/bond-yields-us-10y/main/data/monthly.csv
+        date_col: Date
+        value_col: Rate
+        snapshot: us_10y_monthly.csv
+  cross_assets:
+  - name: vix
+    description: CBOE VIX close (16:15 New York). Usable from the end of its New York
+      day.
+    frequency: daily
+    timezone: America/New_York
+    availability_lag_days: 0
+    transform: level
+    source:
+      kind: datahub_csv
+      params:
+        url: https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv
+        date_col: DATE
+        value_col: CLOSE
+        snapshot: vix_daily.csv
+  - name: brent
+    description: Brent spot (EIA). Publication time uncertain; usable from the next
+      New York day.
+    frequency: daily
+    timezone: America/New_York
+    availability_lag_days: 1
+    transform: level
+    source:
+      kind: datahub_csv
+      params:
+        url: https://raw.githubusercontent.com/datasets/oil-prices/main/data/brent-daily.csv
+        date_col: Date
+        value_col: Price
+        snapshot: brent_daily.csv
+  - name: px_dxy
+    frequency: bar
+    timezone: UTC
+    availability_lag_days: 0
+    transform: level
+    description: Synthetic ICE US Dollar Index (DXY) from the 6 Dukascopy hourly mid
+      closes (EUR, JPY, GBP, CAD, SEK, CHF; official exponents and constant), known
+      at the same bar close
+    source:
+      kind: basket
+      params:
+        components: dxy
+        start: '2005-01-01'
+        end: '2026-10-01'
+        granularity: hour
+  - name: px_usd_xeur
+    frequency: bar
+    timezone: UTC
+    availability_lag_days: 0
+    transform: level
+    description: 'Dollar index EX-EUR: the DXY basket without EURUSD, exponents renormalised
+      to sum 1 (JPY, GBP, CAD, SEK, CHF). Divergence vs EURUSD = euro-specific move'
+    source:
+      kind: basket
+      params:
+        components: dxy
+        drop:
+        - EURUSD
+        renormalize: true
+        start: '2005-01-01'
+        end: '2026-10-01'
+        granularity: hour
+stats:
+  horizons:
+  - 1
+  - 3
+  - 6
+  - 12
+  - 24
+  min_trades: 60
+  focus:
+  - x_px_

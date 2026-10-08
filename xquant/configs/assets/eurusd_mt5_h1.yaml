@@ -1,0 +1,19 @@
+# EUR/USD hourly from YOUR broker's MetaTrader 5 history export (alternative to Dukascopy).
+# Export: MT5 -> View -> Symbols -> Bars -> EURUSD, H1 -> Export Bars -> save as datasets/eurusd_mt5_h1.csv
+# Set server_tz to your broker's server time ("nyclose" = UTC+2 winter / UTC+3 summer is the most common).
+# The Fed cross-check will fail loudly if server_tz is wrong.
+asset:
+  symbol: EURUSD_MT5_H1
+  name: EUR/USD (1h, broker MT5 export)
+  market: fx
+  timeframe: 1h
+  timezone: America/New_York
+  price_source:
+    kind: mt5_csv
+    params: {path: datasets/eurusd_mt5_h1.csv, server_tz: nyclose, bar: 1h, point: 0.00001}
+  cross_check: {asset: EURUSD, local_time: "12:00", tz: America/New_York, max_median_bps: 10, min_return_corr: 0.9}
+  costs: {spread_bps: 0.8, commission_bps: 0.35, slippage_bps: 0.3, latency_bars: 0, use_data_spread: true}
+  splits: {train_end: 2016-12-31, validation_end: 2019-12-31, test_end: 2022-12-31, embargo_bars: 120}
+stats:
+  horizons: [1, 3, 6, 12, 24]
+  min_trades: 60

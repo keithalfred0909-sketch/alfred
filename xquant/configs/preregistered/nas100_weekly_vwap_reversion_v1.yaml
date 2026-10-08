@@ -1,0 +1,38 @@
+# PRE-REGISTRATION - do not edit after evaluation (the lab stores the SHA-256 and refuses edited re-runs).
+# Run once: uv run xquant confirm --spec configs/preregistered/nas100_weekly_vwap_reversion_v1.yaml --offline
+name: nas100_weekly_vwap_reversion_v1
+asset: NAS100_H1_NQ
+registered_by: 'X-QUANT, 2026-10-04, at the user''s request to add the weekly VWAP; registered before any weekly-VWAP-based
+  outcome was computed (only the band occupancy was looked at: -2: 7.1%, +2: 11.4% of bars)'
+hypothesis: 'Mean reversion to the weekly VWAP: when the Nasdaq 100 closes an hour at or beyond 2 volume-weighted
+  standard deviations from the weekly VWAP, it moves back toward the VWAP over the next 6-12 hours (long below -2
+  sigma, short above +2 sigma).'
+rationale: 'The user''s own discretionary rule (reversion from +-2 deviation VWAP bands, used on the session VWAP
+  in range days), transferred to the weekly anchor. Caveats declared in advance: Dukascopy tick volume (not CME
+  volume) weights the VWAP; no range-day filter (the composite-profile regime is not available), so trend weeks
+  are included; time exits only (no ''exit at VWAP'').'
+variants:
+- conditions:
+  - feature: wvwap_band
+    side: eq
+    q: -2.0
+  direction: 1
+  hold: 6
+- conditions:
+  - feature: wvwap_band
+    side: eq
+    q: -2.0
+  direction: 1
+  hold: 12
+- conditions:
+  - feature: wvwap_band
+    side: eq
+    q: 2.0
+  direction: -1
+  hold: 6
+- conditions:
+  - feature: wvwap_band
+    side: eq
+    q: 2.0
+  direction: -1
+  hold: 12

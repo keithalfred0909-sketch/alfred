@@ -1,0 +1,87 @@
+# PRE-REGISTRATION - do not edit after evaluation (the lab stores the SHA-256 and refuses edited re-runs).
+# Run once: uv run xquant confirm --spec configs/preregistered/dxy_smt_eurusd_v1.yaml --offline
+name: dxy_smt_eurusd_v1
+asset: EURUSD_H1_DXY
+registered_by: X-QUANT, on the user's question 'does DXY divergence help EUR/USD?' (2026-10-04), written before
+  any DXY-based feature had been evaluated
+hypothesis: 'SMT divergence between EUR/USD and the US Dollar Index predicts a EUR/USD reversal: when EUR/USD closes
+  below its previous N-bar low and the DXY does NOT close above its previous N-bar high, EUR/USD rises over the
+  following hours; the mirror case at highs predicts a fall.'
+rationale: 'Popular discretionary concept (''SMT divergence''). The DXY is 57.6% EUR, so a non-confirmation means
+  the other five currencies moved against the dollar: the euro-specific move is the outlier and should mean-revert.
+  Prior: weak. Related SMT tests on gold/silver (RUN-00027) and EUR/USD-GBP/USD (RUN-00028) found nothing - recorded
+  for transparency; they do not involve DXY features. Exits are time-based only (3/6/12 one-hour bars); costs, splits
+  and the full adversarial battery are the lab defaults for EURUSD_H1.'
+variants:
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 3
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 6
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 12
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 3
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 6
+- conditions:
+  - feature: x_px_dxy_smt20
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 12
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 3
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 6
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: 1.0
+  direction: 1
+  hold: 12
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 3
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 6
+- conditions:
+  - feature: x_px_dxy_smt60
+    side: eq
+    q: -1.0
+  direction: -1
+  hold: 12

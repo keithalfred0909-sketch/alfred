@@ -1,0 +1,45 @@
+# EUR/USD daily WITH OHLC, spreads and tick volume: built from the validated hourly Dukascopy bars
+# (configs/assets/eurusd_h1.yaml) as 17:00 New York sessions. No extra download; inherits the hourly
+# format checks and the Fed cross-check. Splits match configs/assets/eurusd.yaml for comparability
+# (TRAIN is shorter here: Dukascopy history used from 2005).
+asset:
+  symbol: EURUSD_D1
+  name: EUR/USD (daily OHLC, 17:00 NY sessions)
+  market: fx
+  timeframe: 1D
+  timezone: America/New_York
+  price_source:
+    kind: resample_asset
+    params: {asset: EURUSD_H1, session_close: "17:00", tz: America/New_York, min_bars: 12}
+  costs: {spread_bps: 1.0, commission_bps: 0.5, slippage_bps: 0.5, latency_bars: 0, use_data_spread: true}
+  splits: {train_end: 2014-12-31, validation_end: 2018-12-31, test_end: 2022-12-31, embargo_bars: 20}
+  macro:
+    - name: us_cpi_yoy
+      description: US CPI-U YoY (BLS). Conservative 35-day publication lag.
+      frequency: monthly
+      timezone: America/New_York
+      availability_lag_days: 35
+      transform: yoy
+      source: {kind: datahub_csv, params: {url: https://raw.githubusercontent.com/datasets/cpi-us/main/data/cpiai.csv, date_col: Date, value_col: Index, snapshot: us_cpi.csv}}
+    - name: us_10y_yield
+      description: US 10Y yield, monthly average (Fed H.15). Known at month end.
+      frequency: monthly
+      timezone: America/New_York
+      availability_lag_days: 1
+      transform: level
+      source: {kind: datahub_csv, params: {url: https://raw.githubusercontent.com/datasets/bond-yields-us-10y/main/data/monthly.csv, date_col: Date, value_col: Rate, snapshot: us_10y_monthly.csv}}
+  cross_assets:
+    - name: vix
+      description: CBOE VIX close (16:15 NY). Usable from the end of its New York day (i.e. from the next session).
+      frequency: daily
+      timezone: America/New_York
+      availability_lag_days: 0
+      transform: level
+      source: {kind: datahub_csv, params: {url: https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv, date_col: DATE, value_col: CLOSE, snapshot: vix_daily.csv}}
+    - name: brent
+      description: Brent spot (EIA). Usable from the next New York day.
+      frequency: daily
+      timezone: America/New_York
+      availability_lag_days: 1
+      transform: level
+      source: {kind: datahub_csv, params: {url: https://raw.githubusercontent.com/datasets/oil-prices/main/data/brent-daily.csv, date_col: Date, value_col: Price, snapshot: brent_daily.csv}}

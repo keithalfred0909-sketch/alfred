@@ -1,0 +1,32 @@
+# PRE-REGISTRATION (allocation) - do not edit after evaluation; the lab stores the SHA-256 and runs it once.
+# Run: uv run xquant allocate --spec configs/preregistered/vol_managed_nas100_v1.yaml --offline
+name: vol_managed_nas100_v1
+kind: vol_managed
+registered_by: X-QUANT, 2026-10-04, before computing any allocation result
+hypothesis: 'Volatility-managed exposure (Moreira & Muir, Journal of Finance 2017): scaling a long Nasdaq 100 position
+  by the inverse of its recent realised variance gives a higher Sharpe ratio than buy-and-hold with the same average
+  exposure.'
+rationale: 'Uses the one effect this lab has replicated on every asset: volatility clustering. Variance is predictable
+  while the expected return does not rise one-for-one with it, so exposure should fall when variance is high. Literature
+  caveat: later studies report weaker out-of-sample gains.'
+universe:
+- NAS100
+rules: daily sessions closing 17:00 NY; weight decided at the close of day t from data up to t, applied to day t+1;
+  w = min(c / RV, cap); c fitted on TRAIN only so that the average weight on TRAIN is 1; benchmark = 1x buy-and-hold;
+  risk-free rate ignored for both (not available) - this slightly favours the levered strategy
+variants:
+- rv: daily
+  window: 22
+  cap: 2.0
+- rv: hourly
+  window: 5
+  cap: 2.0
+costs_bps_per_unit_turnover:
+  NAS100: 0.435
+splits:
+  train_end: '2019-12-31'
+  validation_end: '2021-12-31'
+  test_end: '2023-12-31'
+pass_rule: 'on TRAIN+VALIDATION (nothing but the scale c is fitted): managed Sharpe > 0, managed-minus-benchmark
+  Sharpe > 0 with paired stationary-bootstrap p < 0.05, deflated Sharpe >= 0.95 (N = allocation variants registered),
+  >= 50% profitable years; then TEST once (Sharpe difference > 0), then FINAL once'

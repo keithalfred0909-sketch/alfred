@@ -1,0 +1,8 @@
+{
+  "url": "https://raw.githubusercontent.com/datasets/bond-yields-us-10y/main/data/monthly.csv",
+  "raw_sha256": "314515604d06592af462d7e9ec8b4014d746c5ab21deb0a2e9ec72d1675c9265",
+  "rows": 881,
+  "downloaded_at": "2026-10-08T08:56:20+00:00",
+  "filter": null,
+  "snapshot_sha256": "cfc832dfbceed80e2263e14b2f59c98d3095b099dcb6d7affb025f51a68ce7ef"
+}

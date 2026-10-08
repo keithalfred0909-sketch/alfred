@@ -1,0 +1,44 @@
+# PRE-REGISTRATION (allocation) - do not edit after evaluation; the lab stores the SHA-256 and runs it once.
+# Run: uv run xquant allocate --spec configs/preregistered/fx_xs_momentum_v1.yaml --offline
+name: fx_xs_momentum_v1
+kind: xs_momentum
+registered_by: X-QUANT, 2026-10-04, before computing any allocation result
+hypothesis: 'Cross-sectional currency momentum (Menkhoff, Sarno, Schmeling & Schrimpf, Journal of Financial Economics
+  2012): currencies that appreciated most against the USD over the past weeks keep outperforming those that depreciated
+  most.'
+rationale: 'Dollar-neutral (long 2, short 2): no bet on the direction of the dollar. Caveat: only 6 currencies;
+  the published effect is strongest at monthly horizons and in broader universes.'
+universe:
+- EUR
+- GBP
+- JPY
+- CAD
+- CHF
+- SEK
+fx_orientation:
+  EURUSD: 1
+  GBPUSD: 1
+  USDJPY: -1
+  USDCAD: -1
+  USDCHF: -1
+  USDSEK: -1
+rules: currency return vs USD = +EURUSD, +GBPUSD, -USDJPY, -USDCAD, -USDCHF, -USDSEK daily session returns; rebalance
+  at the last session of each week; rank by lookback return; +0.5 in each of the top 2, -0.5 in each of the bottom
+  2; held until the next rebalance
+variants:
+- lookback: 20
+- lookback: 60
+costs_bps_per_unit_turnover:
+  EUR: 1.05
+  GBP: 1.05
+  JPY: 1.05
+  CAD: 1.05
+  CHF: 1.05
+  SEK: 2.0
+splits:
+  train_end: '2016-12-31'
+  validation_end: '2019-12-31'
+  test_end: '2022-12-31'
+pass_rule: 'on TRAIN+VALIDATION (no parameter is fitted): Sharpe > 0 with stationary-bootstrap 95% CI lower bound
+  > 0, deflated Sharpe >= 0.95 (N = allocation variants registered), >= 50% profitable years; then TEST once (Sharpe
+  > 0), then FINAL once'

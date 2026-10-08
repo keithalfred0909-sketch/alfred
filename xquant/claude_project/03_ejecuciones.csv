@@ -1,0 +1,43 @@
+run,fecha,mercado,modo,veredicto,detalle
+RUN-00001,2026-10-03,EURUSD,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00002,2026-10-03,EURUSD,deep,NO EDGE FOUND,"80 candidate strategies examined; none survived. Outcome: {'REJECTED': 59, 'OVERFIT': 21}."
+RUN-00003,2026-10-04,EURUSD_H1,standard,ABORTED,"aborted on purpose: data cleaning removed two genuine NFP reaction bars (2007-10-05, 2013-05-03); rerun after fix"
+RUN-00004,2026-10-04,EURUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00005,2026-10-04,EURUSD_D1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00006,2026-10-04,EURUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00007,2026-10-04,EURUSD_D1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00008,2026-10-04,EURUSD_D1,deep,NO EDGE FOUND,"80 candidate strategies examined; none survived. Outcome: {'REJECTED': 69, 'OVERFIT': 11}."
+RUN-00009,2026-10-04,EURUSD_H1,deep,NO EDGE FOUND,"80 candidate strategies examined; none survived. Outcome: {'REJECTED': 69, 'OVERFIT': 11}."
+RUN-00010,2026-10-04,XAUUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00011,2026-10-04,XAUUSD_D1,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 26, 'OVERFIT': 4}."
+RUN-00012,2026-10-04,XAUUSD_H1,deep,NO EDGE FOUND,"80 candidate strategies examined; none survived. Outcome: {'REJECTED': 58, 'OVERFIT': 22}."
+RUN-00013,2026-10-04,XAUUSD_H4,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00014,2026-10-04,XAUUSD_H2,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 25, 'OVERFIT': 5}."
+RUN-00015,2026-10-04,EURUSD_H4,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 26, 'OVERFIT': 4}."
+RUN-00016,2026-10-04,EURUSD_H2,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00017,2026-10-04,XAUUSD_H1,standard,NO EDGE FOUND,"No candidate reached positive, trade-sufficient fitness on TRAIN."
+RUN-00018,2026-10-04,EURUSD_H1,standard,NO EDGE FOUND,"No candidate reached positive, trade-sufficient fitness on TRAIN."
+RUN-00019,2026-10-04,XAUUSD_M30,standard,NO EDGE FOUND,"No candidate reached positive, trade-sufficient fitness on TRAIN."
+RUN-00020,2026-10-04,XAUUSD_M15,standard,NO EDGE FOUND,"No candidate reached positive, trade-sufficient fitness on TRAIN."
+RUN-00021,2026-10-04,XAUUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00022,2026-10-04,EURUSD_H1,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 28, 'OVERFIT': 2}."
+RUN-00023,2026-10-04,NAS100_H1,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 26, 'OVERFIT': 4}."
+RUN-00024,2026-10-04,XAUUSD_M5,standard,NO EDGE FOUND,"No candidate reached positive, trade-sufficient fitness on TRAIN."
+RUN-00025,2026-10-04,XAUUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00026,2026-10-04,EURUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00027,2026-10-04,XAUUSD_H1_RV,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00028,2026-10-04,EURUSD_H1_RV,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00029,2026-10-04,EURUSD_H1_DXY,confirmatory,NO EDGE FOUND,"[pre-registered 'dxy_smt_eurusd_v1', N=12] 12 candidate strategies examined; none survived. Outcome: {'REJECTED': 12}."
+RUN-00030,2026-10-04,EURUSD_H1_DXY,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00031,2026-10-04,ALLOCATION,allocation,NO EDGE FOUND,"allocation 'vol_managed_nas100_v1': {'rv': 'daily', 'window': 22, 'cap': 2.0} -> REJECTED, {'rv': 'hourly', 'window': 5, 'cap': 2.0} -> REJECTED"
+RUN-00032,2026-10-04,ALLOCATION,allocation,NO EDGE FOUND,"allocation 'tsmom_diversified_v1': {'lookback': 252} -> REJECTED, {'lookback': 63} -> REJECTED"
+RUN-00033,2026-10-04,ALLOCATION,allocation,NO EDGE FOUND,"allocation 'fx_xs_momentum_v1': {'lookback': 20} -> REJECTED, {'lookback': 60} -> REJECTED"
+RUN-00034,2026-10-04,NAS100_H1_NQ,confirmatory,NO EDGE FOUND,"[pre-registered 'nas100_weekly_vwap_reversion_v1', N=4] 4 candidate strategies examined; none survived. Outcome: {'REJECTED': 4}."
+RUN-00035,2026-10-04,DAYTRADE:NAS100,daytrade,EDGE FOUND (provisional),"daytrade 'nq_orb5_v2': {'id': 'A', 'context': 'none'} -> ROBUST, {'id': 'B', 'context': 'weekly_vwap_side'} -> REJECTED"
+RUN-00036,2026-10-04,NAS100_M30,confirmatory,FAILED,KeyError: 'im_open_sign'
+RUN-00037,2026-10-04,NAS100_M30,confirmatory,NO EDGE FOUND,"[pre-registered 'nas100_intraday_momentum_v1', N=2] 2 candidate strategies examined; none survived. Outcome: {'REJECTED': 2}."
+RUN-00038,2026-10-04,ML,ml,NO EDGE FOUND,"ML 'ml_gbm_walkforward_v1': EURUSD_H1 -> REJECTED, XAUUSD_H1 -> REJECTED, NAS100_H1_NQ -> REJECTED"
+RUN-00039,2026-10-05,DAYTRADE:USA500,daytrade,NO EDGE FOUND,"daytrade 'spx_orb5_replication_v1': {'id': 'A', 'context': 'none'} -> REJECTED"
+RUN-00040,2026-10-08,NAS100_M30,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00041,2026-10-08,GBPUSD_H1,standard,NO EDGE FOUND,30 candidate strategies examined; none survived. Outcome: {'REJECTED': 30}.
+RUN-00042,2026-10-08,USA500_H1,standard,NO EDGE FOUND,"30 candidate strategies examined; none survived. Outcome: {'REJECTED': 29, 'OVERFIT': 1}."

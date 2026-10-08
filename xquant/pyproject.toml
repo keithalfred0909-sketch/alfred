@@ -1,0 +1,48 @@
+[project]
+name = "xquant"
+version = "0.1.0"
+description = "X-QUANT: autonomous market & macro statistical research laboratory (research/backtest only, no live trading)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "pyyaml>=6",
+    "pydantic>=2.6",
+    "requests>=2.31",
+]
+
+[project.scripts]
+xquant = "xquant.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5", "pandas-stubs", "types-PyYAML", "types-requests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xquant"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["slow: long-running integration tests", "network: needs outbound network"]
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+files = ["src/xquant"]
