@@ -162,4 +162,6 @@ def enqueue(plan: Plan, q: Queue) -> list[tuple[str, bool, Decision]]:
             continue
         jid, created = q.add(d.kind, d.params, priority=d.priority, reason=d.reason)
         out.append((jid, created, d))
+    for h in plan.human_actions:
+        q.alert("ACTION", "director", h)
     return out

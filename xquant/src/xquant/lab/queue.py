@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS jobs (
   max_attempts INTEGER NOT NULL, timeout_s INTEGER NOT NULL, cost_estimate_min REAL, worker TEXT, not_before TEXT,
   created_at TEXT NOT NULL, started_at TEXT, heartbeat_at TEXT, finished_at TEXT, result TEXT, error TEXT, log_path TEXT);
 CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status, priority, created_at);
+CREATE TABLE IF NOT EXISTS alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, level TEXT NOT NULL, source TEXT NOT NULL, message TEXT NOT NULL,
+  acknowledged INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS workers (
   id TEXT PRIMARY KEY, department TEXT, pid INTEGER, host TEXT, status TEXT, current_job TEXT, started_at TEXT,
   heartbeat_at TEXT, jobs_done INTEGER NOT NULL DEFAULT 0, jobs_failed INTEGER NOT NULL DEFAULT 0);
@@ -108,6 +111,24 @@ class Queue:
 
     def close(self) -> None:
         self.conn.close()
+
+    # ---- alerts (things a human should see) --------------------------------------------------------------
+    def alert(self, level: str, source: str, message: str) -> bool:
+        """Raise an alert unless the same message is already open. Levels: INFO, ACTION, WARN, ERROR."""
+        if self.conn.execute("SELECT 1 FROM alerts WHERE message=? AND acknowledged=0", (message,)).fetchone():
+            return False
+        self.conn.execute("INSERT INTO alerts (at, level, source, message) VALUES (?,?,?,?)",
+                          (_iso(_now()), level, source, message))
+        return True
+
+    def alerts(self, include_acknowledged: bool = False, limit: int = 50) -> list[dict[str, Any]]:
+        where = "" if include_acknowledged else " WHERE acknowledged=0"
+        return [dict(r) for r in self.conn.execute(f"SELECT * FROM alerts{where} ORDER BY id DESC LIMIT ?", (limit,))]
+
+    def acknowledge(self, alert_id: int | None = None) -> int:
+        cur = (self.conn.execute("UPDATE alerts SET acknowledged=1 WHERE id=?", (alert_id,)) if alert_id is not None
+               else self.conn.execute("UPDATE alerts SET acknowledged=1 WHERE acknowledged=0"))
+        return cur.rowcount
 
     def _next_id(self, prefix: str) -> str:
         self.conn.execute("CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL)")
@@ -221,6 +242,12 @@ class Queue:
         if j["worker"]:
             col = "jobs_done" if ok else "jobs_failed"
             self.conn.execute(f"UPDATE workers SET {col}={col}+1 WHERE id=?", (j["worker"],))
+        if status == "FAILED":
+            self.alert("ERROR", jid, f"{jid} {j['kind']} {j['params']} FAILED after {j['attempts']} attempt(s): "
+                                     f"{(error.strip().splitlines() or [''])[-1][:160]}")
+        verdict = str((result or {}).get("verdict") or "")
+        if ok and verdict.startswith("EDGE FOUND"):
+            self.alert("ACTION", jid, f"{jid} {j['kind']} {j['params']}: {verdict[:200]} - review the report before anything else")
         return status
 
     def recover_stale(self, stale_after_s: int = 300) -> list[str]:
@@ -229,6 +256,7 @@ class Queue:
         stale = [r["id"] for r in self.conn.execute("SELECT id FROM jobs WHERE status='RUNNING' AND heartbeat_at<?", (cutoff,))]
         for jid in stale:
             self.finish(jid, False, error=f"worker lost: no heartbeat for > {stale_after_s}s", backoff_s=0)
+            self.alert("WARN", jid, f"{jid}: worker lost (no heartbeat > {stale_after_s}s) - job recovered")
         self.conn.execute("UPDATE workers SET status='DEAD', current_job=NULL WHERE status<>'DEAD' AND status<>'STOPPED'"
                           " AND heartbeat_at<?", (cutoff,))
         return stale
@@ -327,7 +355,12 @@ def lab_status(db: str | Path, stale_after_s: int = 300) -> dict[str, Any]:
            "hypotheses": table("SELECT status, COUNT(*) FROM hypotheses GROUP BY status"),
            "strategies": table("SELECT status, COUNT(*) FROM strategies GROUP BY status"),
            "experiments": sum(table("SELECT 'n', COUNT(*) FROM experiments").values()),
-           "preregistrations": table("SELECT COALESCE(verdict, 'PENDING'), COUNT(*) FROM preregistrations GROUP BY 1")}
+           "preregistrations": table("SELECT COALESCE(verdict, 'PENDING'), COUNT(*) FROM preregistrations GROUP BY 1"),
+           "open_alerts": q.alerts(limit=20),
+           "research_hours_queue": round(sum(json.loads(r[0] or "{}").get("seconds", 0) for r in c.execute(
+               "SELECT result FROM jobs WHERE status IN ('DONE','FAILED')")) / 3600, 2),
+           "failed_last_50": int(c.execute("SELECT COUNT(*) FROM (SELECT status FROM jobs WHERE status IN ('DONE','FAILED')"
+                                           " ORDER BY finished_at DESC LIMIT 50) WHERE status='FAILED'").fetchone()[0])}
     try:
         from xquant.lab.hq import strategy_hq
         from xquant.memory.store import ResearchMemory

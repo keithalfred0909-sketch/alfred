@@ -242,6 +242,16 @@ def cmd_hq(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_alerts(args: argparse.Namespace) -> int:
+    from xquant.lab.queue import Queue
+    q = Queue(_lab_db(args))
+    if args.ack is not None or args.ack_all:
+        print(f"acknowledged {q.acknowledge(None if args.ack_all else args.ack)}")
+    for a in q.alerts(include_acknowledged=args.all):
+        print(f"#{a['id']} {a['at']} {a['level']:6s} {a['source']}: {a['message']}{'  (ack)' if a['acknowledged'] else ''}")
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -375,6 +385,12 @@ def main(argv: list[str] | None = None) -> int:
     hqp.add_argument("--top", type=int, default=10)
     hqp.add_argument("--memory")
     hqp.set_defaults(fn=cmd_hq)
+    al2 = sub.add_parser("alerts", help="lab alerts: failures, edges found, lost workers, human actions")
+    al2.add_argument("--ack", type=int, help="acknowledge one alert id")
+    al2.add_argument("--ack-all", action="store_true")
+    al2.add_argument("--all", action="store_true", help="include acknowledged alerts")
+    al2.add_argument("--memory")
+    al2.set_defaults(fn=cmd_alerts)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")

@@ -88,3 +88,24 @@ def test_worker_loop_and_status_are_real(tmp_path, kinds):
 def test_research_job_command_uses_existing_cli():
     argv = lq.KINDS["research"].build({"asset": "EURUSD_H1", "max_minutes": 5, "focus": ["x_px_"]}, "m.db")
     assert argv[1:4] == ["-m", "xquant.cli", "research"] and "--offline" in argv and argv[argv.index("--focus") + 1] == "x_px_"
+
+
+def test_alerts_are_raised_once_and_shown_in_status(tmp_path, kinds):
+    db = tmp_path / "m.db"
+    q = Queue(db)
+    jid, _ = q.add("fail", {}, max_attempts=1)
+    w = q.register_worker(None)
+    execute(q, w, q.claim(w), log_dir=tmp_path)
+    assert [a["level"] for a in q.alerts()] == ["ERROR"]
+    assert not q.alert("ERROR", jid, q.alerts()[0]["message"])  # same open alert is not duplicated
+    assert len(lab_status(db)["open_alerts"]) == 1
+    assert q.acknowledge() == 1 and lab_status(db)["open_alerts"] == []
+
+
+def test_dashboard_control_center_shows_real_state(tmp_path, kinds):
+    from xquant.dashboard.render import build_html
+    from xquant.memory.store import ResearchMemory
+    db = tmp_path / "m.db"
+    Queue(db).add("ok", {})
+    html = build_html(ResearchMemory(db))
+    assert "Control center" in html and "IDLE - no worker running" in html and ">OFFLINE<" in html

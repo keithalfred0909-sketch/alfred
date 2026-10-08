@@ -140,6 +140,7 @@ def build_html(mem: ResearchMemory, refresh: int | None = None) -> str:
                     "<title>X-QUANT Research Dashboard</title><style>", CSS, "</style></head><body><main>",
                     "<h1>X-QUANT Research Dashboard</h1>",
                     '<p class="sub">Research / backtest only - no live trading. Statistical evidence, not investment advice.</p>']
+    P += _control_center(mem)
     verdict = (run or {}).get("verdict") or ((run or {}).get("status") or "NO RUNS YET")
     P.append(f'<div class="card verdict">{_badge(verdict)}<span>{_e(rid or "")} {_e((run or {}).get("asset", ""))}</span>'
              f'<span class="muted" style="font-weight:400">{_e(json.loads((run or {}).get("summary") or "{}").get("detail", ""))}</span></div>')
@@ -205,6 +206,44 @@ def build_html(mem: ResearchMemory, refresh: int | None = None) -> str:
     payload = json.dumps(data).replace("</", "<\\/")
     P.append(f'<script type="application/json" id="data">{payload}</script><script>{JS}</script></main></body></html>')
     return "".join(P)
+
+
+def _control_center(mem: ResearchMemory) -> list[str]:
+    """CONTROL CENTER: every figure comes from the database (agents = live workers, jobs = queue rows). No activity is
+    shown when nothing runs."""
+    from xquant.lab.queue import lab_status
+    try:
+        st = lab_status(mem.path)
+    except Exception as exc:  # the research view must still render
+        return [f'<section class="card"><h2>Control center</h2><p class="muted">unavailable: {_e(exc)}</p></section>']
+    raw_tiers = st.get("strategy_tiers")
+    tiers: dict[str, int] = raw_tiers if isinstance(raw_tiers, dict) else {}
+    jobs = st["jobs"]
+    hyp = st["hypotheses"]
+    tiles = [("Lab status", st["lab"].split(" ")[0]), ("Active agents", st["active_agents"]),
+             ("Running jobs", jobs.get("RUNNING", 0)), ("Queued", jobs.get("QUEUED", 0)),
+             ("Jobs done / failed", f"{jobs.get('DONE', 0)} / {jobs.get('FAILED', 0)}"),
+             ("Hypotheses", sum(hyp.values())), ("Strategies examined", sum(st["strategies"].values())),
+             ("Validated", tiers.get("VALIDATED", 0)), ("Elite", tiers.get("ELITE", 0)), ("Destroyed", tiers.get("DESTROYED", 0)),
+             ("Experiments", st["experiments"]), ("Research hours (queue)", st["research_hours_queue"]),
+             ("Open alerts", len(st["open_alerts"]))]
+    P = ['<section><h2>Control center</h2><div class="grid tiles">' + "".join(
+        f'<div class="card tile"><div class="k">{_e(k)}</div><div class="v{" small" if len(str(v)) > 10 else ""}">{_e(v)}</div></div>'
+        for k, v in tiles) + "</div></section>"]
+    agents = "".join(f"<tr><td>{_e(a['id'])}</td><td>{_e(a['department'])}</td><td>{_e(a['status'])}</td>"
+                     f"<td>{_e(a['current_job'] or '')}</td><td>{_e(a['heartbeat_at'])}</td></tr>" for a in st["agents"])
+    running = "".join(f"<tr><td>{_e(j['id'])}</td><td>{_e(j['department'])}</td><td>{_e(j['kind'])}</td><td>{_e(j['params'])}</td>"
+                      f"<td>{_e(j['started_at'])}</td></tr>" for j in st["running_jobs"])
+    alerts = "".join(f"<tr><td>{_e(a['level'])}</td><td>{_e(a['at'])}</td><td>{_e(a['message'])}</td></tr>" for a in st["open_alerts"])
+    P.append('<section class="grid two"><div class="card"><h2>Agents (live workers)</h2><div class="scroll"><table>'
+             "<tr><th>Agent</th><th>Department</th><th>State</th><th>Job</th><th>Heartbeat</th></tr>"
+             + (agents or '<tr><td colspan="5" class="muted">IDLE - no worker running</td></tr>') + "</table></div></div>"
+             '<div class="card"><h2>Live experiments</h2><div class="scroll"><table>'
+             "<tr><th>Job</th><th>Department</th><th>Kind</th><th>Parameters</th><th>Started</th></tr>"
+             + (running or '<tr><td colspan="5" class="muted">none running</td></tr>') + "</table></div></div></section>")
+    P.append('<section class="card"><h2>Alerts</h2><div class="scroll"><table><tr><th>Level</th><th>When</th><th>Message</th></tr>'
+             + (alerts or '<tr><td colspan="3" class="muted">no open alerts</td></tr>') + "</table></div></section>")
+    return P
 
 
 def render_dashboard(mem: ResearchMemory, out: Path | None = None) -> Path:

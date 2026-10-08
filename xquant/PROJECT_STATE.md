@@ -54,7 +54,7 @@ Datos quemados (TEST/FINAL ya abiertos): NAS100 minuto (2023-07→2026-09) por n
 | R7 | Sin genealogía de estrategias | MEDIUM | HECHO 2026-10-08: `Genome.parents/mutation` (fuera de la clave), `EvolutionEngine.ancestry`, `dossier.lineage` en cada estrategia examinada. Strategy HQ: `xquant hq` (tiers, Hall of Fame, Cementerio con causa de muerte; también en `lab status`) |
 | R8 | Macro sin consenso, News sin fuente | MEDIUM (bloqueado por datos) | Requiere fuente externa |
 | R9 | `run_orb`/GA en Python puro: lento a escala | LOW | DEFER |
-| R10 | Dashboard estático, sin estado en vivo | MEDIUM | Fase 8 tras API de estado |
+| R10 | Dashboard sin estado en vivo | MEDIUM | PARCIAL 2026-10-08: Control Center en el dashboard (tiles, agentes vivos, experimentos en curso, alertas; todo desde la BD; `xquant dashboard --serve` refresca). Alertas: tabla `alerts` (fallos, edges, workers perdidos, acciones humanas), `xquant alerts`. Pendiente: UI 3D/observer (DEFER) |
 
 ## 5. Infra / permisos
 REQUIRED: almacenamiento persistente para datos+memoria (p. ej. bucket GCS con credenciales del usuario, o máquina
@@ -67,7 +67,7 @@ Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 ## 6. Roadmap priorizado
 - **F3 Foundation**: ~~R3~~ ~~R4~~ ~~cola + runner + estado real~~ (hechos). Pendiente: almacenamiento persistente (R1/R2, decisión del usuario: bucket GCS recomendado, variables `XQUANT_GCS_BUCKET`, `XQUANT_GCS_KEY_JSON`).
 - ~~F7 Director~~ (hecho). Ledger con linaje: datos remuestreados (M30←M1) comparten la clave de sus splits protegidos.
-- ~~F5/F6 genealogía + Hall of Fame / Cementerio~~ (hecho). Siguiente: alertas + Control Center conectado (`lab_status.json`, `strategy_hq.json`).
+- ~~F5/F6 genealogía + Hall of Fame / Cementerio~~ (hecho). ~~Alertas + Control Center~~ (hecho).
 - F8 Control Center/Observer conectado al estado real. F4 macro/news cuando haya datos. F9 campaña EUR/USD.
 - DEFER: UI 3D, agentes LLM, RL, ejecución real (prohibida).
 
