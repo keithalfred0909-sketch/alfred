@@ -1,55 +1,39 @@
 {
- "as_of": "2026-10-08T09:05:05+00:00",
- "lab": "ONLINE",
- "active_agents": 1,
- "agents": [
-  {
-   "id": "W-vm-4516-50301",
-   "department": "any",
-   "status": "RUNNING",
-   "current_job": "JOB-000003",
-   "heartbeat_at": "2026-10-08T09:05:01+00:00",
-   "jobs_done": 0,
-   "jobs_failed": 0
-  }
- ],
- "running_jobs": [
-  {
-   "id": "JOB-000003",
-   "kind": "research",
-   "department": "pattern_mining",
-   "params": "{\"asset\": \"NAS100_M30\", \"max_minutes\": 45, \"mode\": \"standard\"}",
-   "started_at": "2026-10-08T09:05:01+00:00",
-   "attempts": 1
-  }
- ],
+ "as_of": "2026-10-08T09:18:44+00:00",
+ "lab": "OFFLINE (no live worker)",
+ "active_agents": 0,
+ "agents": [],
+ "running_jobs": [],
  "jobs": {
-  "DONE": 2,
-  "RUNNING": 1
+  "DONE": 3
  },
  "jobs_by_department": {
   "data_mining:DONE": 1,
-  "pattern_mining:RUNNING": 1,
+  "pattern_mining:DONE": 1,
   "research_memory:DONE": 1
  },
  "research_runs": {
   "ABORTED": 1,
   "EDGE FOUND (provisional)": 1,
   "FAILED": 1,
-  "NO EDGE FOUND": 36
+  "NO EDGE FOUND": 37
  },
  "hypotheses": {
   "OVERFIT": 152,
-  "REJECTED": 51504,
+  "REJECTED": 53809,
   "VALIDATION": 98
  },
  "strategies": {
   "OVERFIT": 84,
-  "REJECTED": 789
+  "REJECTED": 819
  },
- "experiments": 374,
+ "experiments": 386,
  "preregistrations": {
   "EDGE FOUND (provisional)": 1,
   "NO EDGE FOUND": 8
+ },
+ "strategy_tiers": {
+  "DESTROYED": 903,
+  "VALIDATED": 1
  }
 }

@@ -1,6 +1,6 @@
 {
  "tiers": {
-  "DESTROYED": 878,
+  "DESTROYED": 903,
   "VALIDATED": 1
  },
  "hall_of_fame": [
@@ -14,66 +14,150 @@
   }
  ],
  "cemetery": {
-  "buried": 878,
+  "buried": 903,
   "causes_any": {
-   "deflated_sharpe": 878,
-   "probability_backtest_overfitting": 770,
-   "few_trades_dependence": 651,
-   "out_of_sample_validation": 526,
-   "walk_forward": 111,
+   "deflated_sharpe": 903,
+   "probability_backtest_overfitting": 795,
+   "few_trades_dependence": 676,
+   "out_of_sample_validation": 538,
+   "walk_forward": 112,
    "other_years": 98,
-   "schedule_dependence": 77,
-   "beats_random_entries": 72,
+   "schedule_dependence": 79,
+   "beats_random_entries": 78,
    "entry_displacement": 65,
    "spread_slippage_x2": 52,
    "monte_carlo_loss_probability": 51,
    "other_regimes": 42
   },
   "first_listed_cause": {
-   "out_of_sample_validation": 526,
-   "few_trades_dependence": 217,
+   "out_of_sample_validation": 538,
+   "few_trades_dependence": 229,
    "deflated_sharpe": 84,
    "walk_forward": 17,
-   "beats_random_entries": 16,
+   "beats_random_entries": 17,
    "other_years": 6,
    "entry_displacement": 5,
    "spread_slippage_x2": 5
   },
   "recent": [
    {
-    "id": "STR-000874",
+    "id": "STR-000899",
     "asset": "NAS100_M30",
-    "rules": "LONG when sess_pos in top 20%; exit after 20 bars, trailing stop 0.5 x vol x sqrt(hold) from best close",
+    "rules": "LONG when x_vix_chg20 in top 15% AND zdist_10 in bottom 15% AND ret_5 in bottom 10%; exit after 3 bars, take-profit 2.0 x vol x sqrt(hold)",
     "died_of": [
      "few_trades_dependence",
      "deflated_sharpe",
      "probability_backtest_overfitting"
     ],
-    "at": "2026-10-08T09:08:26+00:00",
+    "at": "2026-10-08T09:17:28+00:00",
     "lineage_depth": 0
    },
    {
-    "id": "STR-000875",
+    "id": "STR-000900",
     "asset": "NAS100_M30",
-    "rules": "LONG when sess_pos in top 20% AND streak in top 20%; exit after 20 bars, stop 0.5 x vol x sqrt(hold)",
+    "rules": "LONG when x_vix_chg20 in top 15% AND zdist_10 in bottom 15% AND ret_5 in bottom 10%; exit after 3 bars",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:17:28+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000901",
+    "asset": "NAS100_M30",
+    "rules": "LONG when zdist_10 in bottom 15% AND x_vix_chg20 in top 15% AND ret_5 in bottom 10%; exit after 3 bars, take-profit 1.5 x vol x sqrt(hold)",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:17:28+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000902",
+    "asset": "NAS100_M30",
+    "rules": "LONG when zdist_10 in bottom 15% AND ret_5 in bottom 10% AND x_vix_chg20 in top 15%; exit after 8 bars, take-profit 1.0 x vol x sqrt(hold)",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:17:28+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000903",
+    "asset": "NAS100_M30",
+    "rules": "LONG when x_vix_chg20 in top 15% AND ret_5 in bottom 10%; exit after 3 bars",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:17:28+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000894",
+    "asset": "NAS100_M30",
+    "rules": "LONG when x_us_cpi_yoy in bottom 30% AND x_vix_chg20 in top 30% AND volratio_5_20 in bottom 20%; exit after 20 bars",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:15:58+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000895",
+    "asset": "NAS100_M30",
+    "rules": "LONG when x_us_cpi_yoy in bottom 30% AND x_vix_chg20 in top 30% AND volratio_5_20 in bottom 20%; exit after 20 bars, trailing stop 2.0 x vol x sqrt(hold) from best close",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:15:58+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000896",
+    "asset": "NAS100_M30",
+    "rules": "LONG when x_brent_chg63 in top 30% AND x_us_cpi_yoy_z250 in bottom 10% AND x_us_cpi_yoy_chg5 in bottom 15%; exit after 15 bars, stop 2.0 x vol x sqrt(hold)",
     "died_of": [
      "out_of_sample_validation",
-     "beats_random_entries",
-     "few_trades_dependence"
+     "few_trades_dependence",
+     "deflated_sharpe"
     ],
-    "at": "2026-10-08T09:08:26+00:00",
+    "at": "2026-10-08T09:15:58+00:00",
     "lineage_depth": 0
    },
    {
-    "id": "STR-000876",
+    "id": "STR-000897",
     "asset": "NAS100_M30",
-    "rules": "LONG when wvwap_z in top 20% AND sess_pos in top 10%; exit after 15 bars, stop 0.5 x vol x sqrt(hold)",
+    "rules": "LONG when x_us_cpi_yoy in bottom 30% AND x_vix_chg20 in top 30% AND volratio_5_20 in bottom 20%; exit after 20 bars, stop 1.0 x vol x sqrt(hold)",
     "died_of": [
      "few_trades_dependence",
      "deflated_sharpe",
      "probability_backtest_overfitting"
     ],
-    "at": "2026-10-08T09:08:26+00:00",
+    "at": "2026-10-08T09:15:58+00:00",
+    "lineage_depth": 0
+   },
+   {
+    "id": "STR-000898",
+    "asset": "NAS100_M30",
+    "rules": "LONG when x_us_cpi_yoy_z250 in bottom 10% AND x_brent_chg63 in top 30%; exit after 10 bars",
+    "died_of": [
+     "few_trades_dependence",
+     "deflated_sharpe",
+     "probability_backtest_overfitting"
+    ],
+    "at": "2026-10-08T09:15:58+00:00",
     "lineage_depth": 0
    }
   ]
