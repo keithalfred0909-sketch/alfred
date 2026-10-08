@@ -79,7 +79,8 @@ class DataEngine:
             notes.append(f"cross-check vs {self.asset.cross_check.get('asset')}: {cc}")
         meta = DatasetMeta(symbol=self.asset.symbol, timeframe=self.asset.timeframe, source=src.describe(),
                            sha256=frame_sha256(bars), capabilities=caps, n_rows=len(bars),
-                           start=str(bars.index[0]), end=str(bars.index[-1]), notes=notes)
+                           start=str(bars.index[0]), end=str(bars.index[-1]), notes=notes,
+                           root_sha256=str(prov.get("root_sha256", "")) if prov else "")
         log.info("loaded %s: %d bars %s..%s (%s), quality %s", self.asset.symbol, len(bars),
                  bars.index[0].date(), bars.index[-1].date(), caps.describe(), rep.verdict)
         return bars, meta, rep

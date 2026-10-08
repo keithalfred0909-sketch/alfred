@@ -181,6 +181,50 @@ def cmd_lab(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_director(args: argparse.Namespace) -> int:
+    from xquant.lab.director import enqueue, make_plan
+    from xquant.lab.queue import Queue
+    from xquant.memory.store import ResearchMemory
+    plan = make_plan(ResearchMemory(_lab_db(args)), max_new=args.max_new)
+    queued = enqueue(plan, Queue(_lab_db(args))) if args.action == "run" else []
+    for d in plan.decisions:
+        print(f"PLAN   {d.priority:11s} {d.kind:9s} {d.params} - {d.reason}")
+    for jid, created, d in queued:
+        print(f"QUEUED {jid} {'new' if created else 'already queued/done'} {d.kind} {d.params}")
+    for s in plan.skipped:
+        print(f"SKIP   {s}")
+    for h in plan.human_actions:
+        print(f"HUMAN  {h}")
+    return 0
+
+
+def cmd_autonomous(args: argparse.Namespace) -> int:
+    """Director -> queue -> workers, repeated until nothing is left to research or a budget ends."""
+    import time as _t
+
+    from xquant.lab.director import enqueue, make_plan
+    from xquant.lab.queue import Queue, lab_status, run_worker
+    from xquant.memory.store import ResearchMemory
+    db, t0 = _lab_db(args), _t.time()
+    for cycle in range(1, args.cycles + 1):
+        plan = make_plan(ResearchMemory(db), max_new=args.max_new)
+        q = Queue(db)
+        new = [jid for jid, created, _ in enqueue(plan, q) if created]
+        pending = len(q.jobs("QUEUED", 1000))
+        q.close()
+        print(f"cycle {cycle}: director queued {len(new)} new job(s), {pending} pending; human actions: {plan.human_actions}")
+        if not pending:
+            print("NOTHING LEFT TO RESEARCH with the data on disk - stopping (see SKIP/HUMAN items: data or a human step needed)")
+            break
+        hours_left = args.max_hours - (_t.time() - t0) / 3600
+        if hours_left <= 0:
+            print("time budget reached - stopping")
+            break
+        print(json.dumps(run_worker(db, max_jobs=pending, idle_exit_s=30, poll_s=5)))
+    (PROJECT_ROOT / "research_output" / "lab_status.json").write_text(json.dumps(lab_status(db), indent=1, default=str))
+    return 0
+
+
 def cmd_portfolio(args: argparse.Namespace) -> int:
     from xquant.memory.store import ResearchMemory
     from xquant.portfolio import format_view, portfolio_view
@@ -299,6 +343,17 @@ def main(argv: list[str] | None = None) -> int:
     lb.add_argument("action", choices=["status"])
     lb.add_argument("--memory")
     lb.set_defaults(fn=cmd_lab)
+    di = sub.add_parser("director", help="research director: plan (dry run) or run (queue the plan)")
+    di.add_argument("action", choices=["plan", "run"])
+    di.add_argument("--max-new", type=int, default=5)
+    di.add_argument("--memory")
+    di.set_defaults(fn=cmd_director)
+    au = sub.add_parser("autonomous", help="autonomous research mode: director -> queue -> workers, repeated")
+    au.add_argument("--cycles", type=int, default=3)
+    au.add_argument("--max-hours", type=float, default=6.0)
+    au.add_argument("--max-new", type=int, default=3)
+    au.add_argument("--memory")
+    au.set_defaults(fn=cmd_autonomous)
     pf = sub.add_parser("portfolio", help="combine validated strategies; frequency measured at portfolio level")
     pf.add_argument("--min-trades-per-day", type=float, default=1.0, help="portfolio-level frequency requirement")
     pf.add_argument("--memory", help="research memory path")

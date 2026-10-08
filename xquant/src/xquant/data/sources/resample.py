@@ -91,5 +91,6 @@ class ResampledAssetSource(DataSource):
         else:
             out, info = aggregate_sessions(bars, self.session_close, self.tz, self.min_bars or 12)
         self.provenance = {"from": f"{self.asset} ({meta.source})", "base_sha256": meta.sha256,
+                           "root_sha256": meta.root_sha256 or meta.sha256,
                            "base_notes": meta.notes, **info}
         return out

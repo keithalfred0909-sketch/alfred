@@ -232,3 +232,11 @@ def test_bid_only_mode_skips_ask_downloads(tmp_path):
     assert not any("ASK" in u for u in calls)
     with pytest.raises(Exception, match="sides"):
         DukascopyCandleSource("EURUSD", "2023-01-01", "2023-02-01", sides=["ASK"])
+
+
+def test_resampled_dataset_keeps_the_root_data_identity():
+    from xquant.data.schema import Capabilities, DatasetMeta
+    caps = Capabilities(ohlc=True, volume=True, intraday=True)
+    base = DatasetMeta("A_M1", "1min", "s", "a" * 64, caps, 10, "x", "y")
+    derived = DatasetMeta("A_M30", "30min", "s", "b" * 64, caps, 5, "x", "y", root_sha256=base.sha256)
+    assert base.root_key == derived.root_key == "bars:" + "a" * 16

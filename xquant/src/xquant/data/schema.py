@@ -44,6 +44,12 @@ class DatasetMeta:
     start: str
     end: str
     notes: list[str] = field(default_factory=list)
+    root_sha256: str = ""  # hash of the ORIGINAL bars this dataset derives from (resampling); "" = itself
+
+    @property
+    def root_key(self) -> str:
+        """Identity of the underlying prices for the protected-split ledger (M30 built from M1 = same data)."""
+        return f"bars:{(self.root_sha256 or self.sha256)[:16]}"
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

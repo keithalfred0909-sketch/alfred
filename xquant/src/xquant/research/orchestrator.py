@@ -591,8 +591,8 @@ class ResearchOrchestrator:
 
     def _bind_data(self, ds: MarketDataset) -> None:
         """Key the multiple-testing family and the protected-split ledger by the underlying price data."""
-        self.data_key = f"bars:{ds.meta.sha256[:16]}"
-        self.guard.data_key = self.data_key
+        self.data_key = f"bars:{ds.meta.sha256[:16]}"  # multiple-testing family: these exact bars
+        self.guard.data_key = ds.meta.root_key  # protected splits: the original prices (resampled data included)
         self.guard.ledger = lambda key, split, who: self.memory.ledger_open(key, split, self.run_id, who)
 
     def _finish(self, out: ResearchOutcome, verdict: str, detail: str) -> ResearchOutcome:
