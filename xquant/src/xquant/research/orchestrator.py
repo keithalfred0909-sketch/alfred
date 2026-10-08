@@ -43,7 +43,7 @@ from xquant.probability.engine import ScenarioReport, scenario_analysis
 from xquant.strategy.evaluator import EvalContext
 from xquant.strategy.genome import Genome, genome_from_hypothesis
 from xquant.validation.overfit import deflated_sharpe_report, pbo_cscv
-from xquant.validation.splits import DataSplits, SplitGuard, make_splits
+from xquant.validation.splits import DataSplits, SplitGuard, make_splits, reuse_tag
 
 log = get_logger("research")
 
@@ -120,6 +120,7 @@ class ResearchOrchestrator:
         self.asset = cfg.asset.symbol
         self.run_id = ""
         self.dv = ""
+        self.data_key = ""  # identity of the underlying price data (shared across configs of the same bars)
         self.cfp = cfg.fingerprint()
 
     # ---- bookkeeping -------------------------------------------------------------------------------
@@ -187,6 +188,7 @@ class ResearchOrchestrator:
             return self._finish(out, "INSUFFICIENT DATA", f"Data could not be loaded or validated: {exc}")
         self.dv = ds.version
         self.run_id = self.memory.start_run(self.asset, cfg.research.mode, self.dv, self.cfp, cfg.research.seed)
+        self._bind_data(ds)
         out.run_id = self.run_id
         out.dataset = {**ds.summary(), "quality_report": ds.quality.to_dict(), "notes": ds.meta.notes,
                        "exogenous_meta": ds.exog_meta,
@@ -260,7 +262,7 @@ class ResearchOrchestrator:
         # 8. TEST, RANKING, FINAL
         self._progress(phase="final_evaluation")
         self._final_stage(ctx, splits, dossiers, out)
-        out.trials = dict(zip(["n_trials", "sr_var_per_period"], self.memory.trials(self.asset, self.dv), strict=True))
+        out.trials = dict(zip(["n_trials", "sr_var_per_period"], self.memory.trials_for(self.asset, self.dv, self.data_key), strict=True))
 
         # 9. SCENARIOS
         out.scenario = self._scenario(ds, ctx, pool, validated, regimes).to_dict()
@@ -413,8 +415,9 @@ class ResearchOrchestrator:
                     mf = [f for f in feats if f.startswith("x_")]
                     eng.seeds = [self._macro_seed(eng, rng, mf) for _ in range(eng.pop_size // 2)]
                 res = eng.run()
-                n_trials, _ = self.memory.add_trials(self.asset, self.dv, res.sr_trials)
-                _, var = self.memory.trials(self.asset, self.dv)
+                self.memory.add_trials(self.asset, self.dv, res.sr_trials)
+                self.memory.add_trials_family(self.data_key, res.sr_trials)
+                n_trials, var = self.memory.trials_for(self.asset, self.dv, self.data_key)
                 pbo = self._pbo(ctx, res, train)
                 examined_here: list[Dossier] = []
                 skipped = 0
@@ -535,7 +538,7 @@ class ResearchOrchestrator:
     def _refresh_deflated_sharpe(self, ctx: EvalContext, splits: DataSplits, dossiers: list[Dossier]) -> None:
         """Re-deflate every candidate with the trial count at the END of the search, so candidates examined
         early do not enjoy a smaller multiple-testing penalty. Can only make verdicts stricter."""
-        n_trials, var = self.memory.trials(self.asset, self.dv)
+        n_trials, var = self.memory.trials_for(self.asset, self.dv, self.data_key)
         train = splits.slice("train")
         for d in dossiers:
             rets = ctx.backtest(d.genome, train, train, count=False).returns.to_numpy()
@@ -586,7 +589,14 @@ class ResearchOrchestrator:
         statuses = pd.Series([d["status"] for d in out.dossiers]).value_counts().to_dict()
         return ("NO EDGE FOUND", f"{n} candidate strategies examined; none survived. Outcome: {statuses}.")
 
+    def _bind_data(self, ds: MarketDataset) -> None:
+        """Key the multiple-testing family and the protected-split ledger by the underlying price data."""
+        self.data_key = f"bars:{ds.meta.sha256[:16]}"
+        self.guard.data_key = self.data_key
+        self.guard.ledger = lambda key, split, who: self.memory.ledger_open(key, split, self.run_id, who)
+
     def _finish(self, out: ResearchOutcome, verdict: str, detail: str) -> ResearchOutcome:
+        verdict = reuse_tag(self.guard, verdict)
         out.verdict, out.verdict_detail = verdict, detail
         out.elapsed_s = time.time() - self.t0
         out.budget = {**self.budget.model_dump(), "experiments_used": self.experiments, "strategies_examined": self.examined,

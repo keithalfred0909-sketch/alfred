@@ -32,7 +32,7 @@ from xquant.errors import ConfigError
 from xquant.memory.store import ResearchMemory
 from xquant.stats import sharpe, stationary_bootstrap_indices
 from xquant.validation.overfit import deflated_sharpe_report
-from xquant.validation.splits import SplitGuard
+from xquant.validation.splits import SplitGuard, reuse_tag
 
 INSTRUMENTS: dict[str, dict[str, Any]] = {
     "EURUSD": {"instrument": "EURUSD", "point": 1e-5, "start": "2005-01-01"},
@@ -150,6 +150,8 @@ class AllocationStudy:
             self.memory.register(spec["name"], ALLOC_ASSET, dv, self.sha, spec, len(spec["variants"]), [])
         run_id = self.memory.start_run(ALLOC_ASSET, "allocation", dv, self.sha[:16], 0)
         n_family = self.memory.registered_variants(ALLOC_ASSET)
+        self.guard.data_key = f"panel:{dv}"
+        self.guard.ledger = lambda key, split, who: self.memory.ledger_open(key, split, run_id, who)
         # each instrument's return over ITS previous session (a holiday gap is one return, not a lost day)
         rets = closes.apply(lambda s: s.dropna().pct_change()).reindex(closes.index)
         idx = pd.DatetimeIndex(closes.index).tz_convert("America/New_York").tz_localize(None)
@@ -216,6 +218,7 @@ class AllocationStudy:
                 top["final_benchmark"] = summary(top["_bench"][split == "final"])
                 fin_ok = fin_ok and top["final"].get("sharpe", -9) > top["final_benchmark"].get("sharpe", 9)
             verdict = "EDGE FOUND (provisional)" if fin_ok else "NO EDGE FOUND"
+        verdict = reuse_tag(self.guard, verdict)
         for res in results:
             res.pop("_net"), res.pop("_bench")
         out = {"run_id": run_id, "spec": spec, "sha256": self.sha, "dataset_version": dv, "multiple_testing_n": n_family,

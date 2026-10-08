@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS trials (
   asset TEXT, dataset_version TEXT, n INTEGER, sum_sr REAL, sum_sr2 REAL, PRIMARY KEY(asset, dataset_version));
 CREATE TABLE IF NOT EXISTS log (
   id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, at TEXT, level TEXT, message TEXT);
+CREATE TABLE IF NOT EXISTS protected_access (
+  data_key TEXT, split TEXT, run_id TEXT, who TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS preregistrations (
   name TEXT, asset TEXT, dataset_version TEXT, sha256 TEXT, registered_at TEXT, spec BLOB, n_variants INTEGER,
   contaminated TEXT, run_id TEXT, verdict TEXT, PRIMARY KEY(name, asset));
@@ -262,6 +264,28 @@ class ResearchMemory:
             return (int(r["n"]) if r else 0, 0.0)
         n, s, s2 = r["n"], r["sum_sr"], r["sum_sr2"]
         return int(n), float(max(s2 / n - (s / n) ** 2, 0.0))
+
+    # ---- integrity across runs: protected-split ledger and multiple-testing families by data ----------
+    def ledger_open(self, data_key: str, split: str, run_id: str, who: str) -> int:
+        """Record that ``run_id`` opened ``split`` of the data ``data_key``; return how many OTHER runs did before."""
+        with self.tx() as c:
+            prior = c.execute("SELECT COUNT(DISTINCT run_id) FROM protected_access WHERE data_key=? AND split=? AND run_id<>?",
+                              (data_key, split, run_id)).fetchone()[0]
+            c.execute("INSERT INTO protected_access VALUES (?,?,?,?,?)", (data_key, split, run_id, who, now()))
+        return int(prior)
+
+    @staticmethod
+    def family_key(data_key: str) -> str:
+        return f"FAMILY:{data_key}"
+
+    def add_trials_family(self, data_key: str, srs: list[float]) -> tuple[int, float]:
+        """Trials counted per underlying price data, whatever config/symbol ran them (deflated Sharpe N)."""
+        return self.add_trials(self.family_key(data_key), "", srs)
+
+    def trials_for(self, asset: str, dv: str, data_key: str) -> tuple[int, float]:
+        """The stricter of the per-config count and the per-data family count."""
+        own, fam = self.trials(asset, dv), self.trials(self.family_key(data_key), "") if data_key else (0, 0.0)
+        return own if own[0] >= fam[0] else fam
 
     # ---- pre-registered (confirmatory) studies ----------------------------------------------------
     def registration(self, name: str, asset: str) -> dict[str, Any] | None:

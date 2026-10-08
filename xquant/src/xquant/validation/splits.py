@@ -14,6 +14,7 @@ The guard is persisted in the research memory so the rule survives across runs.
 from __future__ import annotations
 
 import builtins
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -80,6 +81,11 @@ class SplitGuard:
     final_opened: bool = False
     validation_evaluations: int = 0
     log: list[dict[str, str]] = field(default_factory=list)
+    # Persistent ledger across runs/configs: ledger(data_key, split, who) records the opening and returns how many
+    # OTHER runs already opened that split of the same underlying data. A reused TEST/FINAL is not clean OOS.
+    ledger: Callable[[str, str, str], int] | None = None
+    data_key: str = ""
+    prior_opens: dict[str, int] = field(default_factory=dict)
 
     def request(self, split: SplitName, purpose: Literal["optimize", "evaluate"], who: str) -> None:
         if purpose == "optimize" and split != "train":
@@ -90,9 +96,19 @@ class SplitGuard:
             self.validation_evaluations += 1
         if split == "final" and self.final_opened:
             raise SplitAccessError(f"{who}: FINAL out-of-sample may be opened only once per research cycle")
+        if split in ("test", "final") and self.ledger is not None and self.data_key:
+            self.prior_opens[split] = max(self.prior_opens.get(split, 0), self.ledger(self.data_key, split, who))
         if split == "test":
             self.test_opened = True
         if split == "final":
             self.final_opened = True
         self.log.append({"split": split, "purpose": purpose, "who": who,
                          "at": pd.Timestamp.now(tz="UTC").isoformat(timespec="seconds")})
+
+
+def reuse_tag(guard: SplitGuard, verdict: str) -> str:
+    """An edge confirmed on a FINAL split that earlier runs had already opened is not a clean out-of-sample result."""
+    n = guard.prior_opens.get("final", 0)
+    if n and verdict.startswith("EDGE FOUND"):
+        return f"{verdict} [FINAL already opened by {n} earlier run(s) on this data - not clean OOS]"
+    return verdict

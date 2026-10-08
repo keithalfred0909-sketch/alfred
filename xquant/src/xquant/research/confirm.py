@@ -110,6 +110,7 @@ class ConfirmatoryStudy(ResearchOrchestrator):
         if not prior:
             self.memory.register(spec["name"], self.asset, self.dv, self.sha, spec, len(self.genomes), contaminated)
         self.run_id = self.memory.start_run(self.asset, "confirmatory", self.dv, self.cfp, cfg.research.seed)
+        self._bind_data(ds)
         out.run_id = self.run_id
         out.dataset = {**ds.summary(), "quality_report": ds.quality.to_dict(), "notes": ds.meta.notes,
                        "exogenous_meta": ds.exog_meta}
@@ -131,7 +132,7 @@ class ConfirmatoryStudy(ResearchOrchestrator):
 
         family = self.memory.registered_variants(self.asset)
         if contaminated:
-            n_expl, _ = self.memory.trials(self.asset, self.dv)
+            n_expl, _ = self.memory.trials_for(self.asset, self.dv, self.data_key)
             self._conf_n = n_expl + family
             self._say(f"CONTAMINATED: {contaminated} already used by exploratory research -> not confirmatory; "
                       f"multiple-testing N = all {self._conf_n} trials on this dataset")
@@ -149,6 +150,7 @@ class ConfirmatoryStudy(ResearchOrchestrator):
         train = splits.slice("train")
         srs = [ctx.backtest(g, train, train).metrics.sharpe for g in self.genomes]
         self.memory.add_trials(self.asset, self.dv, srs)  # also tightens later exploratory runs
+        self.memory.add_trials_family(self.data_key, srs)
         pbo = self._variants_pbo(ctx, train)
         rebuild = lambda bars: self._build_context(bars, ds.exog, exprs, None, ppy * len(bars) / len(ds.bars))  # noqa: E731
         adv = AdversarialEngine(ctx, splits, self.guard, cfg.robustness, rebuild, ds.bars, cfg.asset.timezone,

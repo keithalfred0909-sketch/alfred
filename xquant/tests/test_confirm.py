@@ -87,3 +87,22 @@ def test_portfolio_only_uses_validated_strategies(tmp_path):
     assert [c["id"] for c in v["components"]] == ["S0", "S1"]  # the rejected one is never combined
     assert v["portfolio_trades_per_day"] == 1.0 and "below" not in v["verdict"]
     assert "approx_portfolio_sharpe" in v and set(v["correlation"]) == {"S0", "S1"}
+
+
+def test_protected_split_ledger_and_data_families(tmp_path):
+    from xquant.validation.splits import SplitGuard, reuse_tag
+    mem = ResearchMemory(tmp_path / "m.db")
+    g1 = SplitGuard(ledger=lambda k, s, w: mem.ledger_open(k, s, "RUN-1", w), data_key="bars:abc")
+    g1.request("final", "evaluate", "a")
+    assert g1.prior_opens["final"] == 0 and reuse_tag(g1, "EDGE FOUND (provisional)") == "EDGE FOUND (provisional)"
+    g2 = SplitGuard(ledger=lambda k, s, w: mem.ledger_open(k, s, "RUN-2", w), data_key="bars:abc")
+    g2.request("final", "evaluate", "b")  # another run, same underlying data (e.g. another config of the same bars)
+    assert g2.prior_opens["final"] == 1 and "not clean OOS" in reuse_tag(g2, "EDGE FOUND (provisional)")
+    assert reuse_tag(g2, "NO EDGE FOUND") == "NO EDGE FOUND"
+    # two configs of the same bars share one multiple-testing family
+    mem.add_trials("EURUSD_H1", "v1", [0.1] * 300)
+    mem.add_trials_family("bars:abc", [0.1] * 300)
+    mem.add_trials("EURUSD_H1_RV", "v2", [0.2] * 50)
+    mem.add_trials_family("bars:abc", [0.2] * 50)
+    assert mem.trials_for("EURUSD_H1_RV", "v2", "bars:abc")[0] == 350
+    assert mem.trials_for("EURUSD_H1", "v1", "")[0] == 300

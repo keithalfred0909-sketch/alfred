@@ -20,6 +20,7 @@ import yaml
 
 from xquant.backtest.engine import MarketArrays, run_backtest
 from xquant.config import PROJECT_ROOT, CostModel, load_config
+from xquant.data.schema import frame_sha256
 from xquant.errors import ConfigError
 from xquant.features.library import build_primitives
 from xquant.market.behavior import periods_per_year
@@ -27,7 +28,7 @@ from xquant.memory.store import ResearchMemory
 from xquant.stats import sharpe, stationary_bootstrap_indices
 from xquant.validation.overfit import deflated_sharpe_report
 from xquant.validation.robustness import stressed_costs
-from xquant.validation.splits import SplitGuard, make_splits
+from xquant.validation.splits import SplitGuard, make_splits, reuse_tag
 
 FAMILY = "ML"
 
@@ -119,6 +120,7 @@ class MLStudy:
             self.memory.register(spec["name"], FAMILY, "multi", self.sha, spec, len(spec["assets"]), [])
         run_id = self.memory.start_run(FAMILY, "ml", "multi", self.sha[:16], 0)
         n_family = self.memory.registered_variants(FAMILY)
+        self.guard.ledger = lambda key, split, who: self.memory.ledger_open(key, split, run_id, who)
         results = []
         for asset in spec["assets"]:
             bars, exog, cfg = self._data(asset)
@@ -150,7 +152,9 @@ class MLStudy:
                              "profitable_years": bool(res["primary"].get("profitable_years", 0) >= 0.5),
                              "cost_x2_positive": bool(res["cost_x2"].get("sharpe", -1) > 0)}
             res["status"] = "PASSED_PRIMARY" if all(res["checks"].values()) else "REJECTED"
+            res["_key"] = f"bars:{frame_sha256(bars)[:16]}"
             if res["status"] == "PASSED_PRIMARY":
+                self.guard.data_key = res["_key"]
                 self.guard.request("test", "evaluate", f"ml:{spec['name']}:{asset}")
                 rt, nt = combined_returns(m, pred, cfg.asset.costs, splits.slice("test"), horizon)
                 res["test"] = summarize(rt, ppy, nt)
@@ -162,12 +166,15 @@ class MLStudy:
         if robust:
             top = robust[0]
             m, pred, costs, fin, ppy = top["_final"]
+            self.guard.data_key = top["_key"]
             self.guard.request("final", "evaluate", f"ml:{spec['name']}:{top['asset']}")
             rf, nf = combined_returns(m, pred, costs, fin, horizon)
             top["final"] = summarize(rf, ppy, nf)
             verdict = "EDGE FOUND (provisional)" if top["final"].get("sharpe", -1) > 0 else "NO EDGE FOUND"
+        verdict = reuse_tag(self.guard, verdict)
         for x in results:
             x.pop("_final", None)
+            x.pop("_key", None)
         out = {"run_id": run_id, "spec": spec, "sha256": self.sha, "multiple_testing_n": n_family, "results": results,
                "verdict": verdict, "split_access": list(self.guard.log)}
         self.memory.record_split_access(run_id, self.guard.log)

@@ -20,12 +20,13 @@ import pandas as pd
 import yaml
 
 from xquant.config import PROJECT_ROOT, load_config
+from xquant.data.schema import frame_sha256
 from xquant.daytrade.orb import OrbParams, daily_returns, run_orb
 from xquant.errors import ConfigError
 from xquant.memory.store import ResearchMemory
 from xquant.stats import sharpe, stationary_bootstrap_indices
 from xquant.validation.overfit import deflated_sharpe_report
-from xquant.validation.splits import SplitGuard
+from xquant.validation.splits import SplitGuard, reuse_tag
 
 FAMILY = "DAYTRADE:NAS100"
 
@@ -101,6 +102,8 @@ class DayTradeStudy:
             self.memory.register(spec["name"], self.family, dv, self.sha, spec, len(spec["variants"]), [])
         run_id = self.memory.start_run(self.family, "daytrade", dv, self.sha[:16], 0)
         n_family = self.memory.registered_variants(self.family)
+        self.guard.data_key = f"bars:{frame_sha256(bars)[:16]}"
+        self.guard.ledger = lambda key, split, who: self.memory.ledger_open(key, split, run_id, who)
         sp = spec["9_backtest"]["splits"]
         cut = {k: pd.Timestamp(sp[k]) for k in ("train_end", "validation_end", "test_end")}
 
@@ -173,6 +176,7 @@ class DayTradeStudy:
             tf = top["_trades"][top["_trades"]["split"] == "final"]
             top["final"] = trade_stats(tf, sp_days.index[(sp_days == "final").to_numpy()])
             verdict = "EDGE FOUND (provisional)" if top["final"].get("mean_r", -1) > 0 else "NO EDGE FOUND"
+        verdict = reuse_tag(self.guard, verdict)
         for res in results:
             res["trades_sample"] = res["_trades"].head(5).astype(str).to_dict("records")
             res.pop("_trades")
