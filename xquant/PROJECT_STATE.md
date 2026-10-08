@@ -87,3 +87,11 @@ Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 ## 8. Uso rápido de la cola
 `xquant queue add research --asset EURUSD_H1 --max-minutes 30 --priority EXPLORATORY --reason "..."` · `xquant worker --idle-exit 600` · `xquant lab status`.
 Tipos: research, confirm, allocate, daytrade, ml (`--spec`), data (`--online` para descargar), compact. Logs: `runs/jobs/`.
+
+## 9. Retomar en otra máquina (p. ej. Claude Code local en el PC del usuario, para operar MT5)
+`git clone https://github.com/keithalfred0909-sketch/alfred.git && cd alfred && git checkout claude/ecstatic-pasteur-nyyph7 && cd xquant && uv sync`
+y leer este fichero. `memory.db` e informes viajan en git; `cache/` (161 MB Dukascopy) NO: se re-descarga bajo demanda
+(`xquant data validate --asset <X>` sin `--offline`; horas por rate-limit), solo lo que haga falta. El lab se desarrolló en
+Linux: en Windows pueden aparecer fallos de rutas/procesos (cola con subprocesos): ejecutar `uv run pytest` primero.
+MT5 en local: compilar sin GUI con `metaeditor64.exe /compile:"<ruta .mq5>" /log`; Probador con `terminal64.exe /config:<tester.ini>`.
+El login demo, "Algo Trading" y cualquier contraseña los pone el usuario, nunca en el chat. EA solo demo.
