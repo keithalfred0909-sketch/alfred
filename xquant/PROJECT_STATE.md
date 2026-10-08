@@ -34,9 +34,9 @@ implementado está en la tabla anterior; no hay tareas "marcadas como hechas" si
 (grep limpio); los datos sintéticos solo existen en tests (controles positivo/negativo).
 
 ## 3. Resultados de investigación (no repetir)
-39 ejecuciones. Todas NO EDGE FOUND salvo `nq_orb5_v2` (ORB 5 min Nasdaq, EDGE provisional, frágil: TEST +0,025R,
+42 ejecuciones. Todas NO EDGE FOUND salvo `nq_orb5_v2` (ORB 5 min Nasdaq, EDGE provisional, frágil: TEST +0,025R,
 réplica S&P 500 no confirma, sensible a 1 min de retraso). 873 estrategias examinadas (789 REJECTED, 84 OVERFIT),
-51.754 hipótesis. Probado y descartado: EUR/USD (Fed diario, H1/H2/H4/D1), oro (H1/H2/H4/D1/M30/M15/M5), Nasdaq H1,
+51.754 hipótesis. Probado y descartado: NAS100 M30, GBP/USD H1, S&P 500 H1 (tanda autónoma 2), EUR/USD (Fed diario, H1/H2/H4/D1), oro (H1/H2/H4/D1/M30/M15/M5), Nasdaq H1,
 ≥1 op/día, sesiones, trailing+ensemble, valor relativo oro/plata y EUR/GBP, SMT/residuo DXY, VWAP semanal, momentum
 intradía (Gao et al.), vol-managed, TSMOM, momentum FX cross-section, ML walk-forward. Detalle: `README.md` y `research_output/reports/`.
 Datos quemados (TEST/FINAL ya abiertos): NAS100 minuto (2023-07→2026-09) por nq_orb5_v2 y spx réplica.
@@ -72,6 +72,13 @@ Skills del proyecto: ninguna en `.claude/` (no hay duplicados que evitar).
 - DEFER: UI 3D, agentes LLM, RL, ejecución real (prohibida).
 
 ## 7. Decisiones vigentes
+- **OBJETIVOS DEL USUARIO (registrado 2026-10-08, faltaba hasta ahora)**: dos usos distintos, dos funciones objetivo:
+  (A) **pasar cuentas de fondeo** (prop firm): métrica = P(alcanzar objetivo antes de romper DD diario/máximo, dentro de
+  las reglas exactas de la firma) y su coste esperado (cuota x intentos), SIEMPRE comparada con la de un sistema sin edge
+  con el mismo tamaño (sin edge, apostar fuerte maximiza P(pasar): eso es lotería, no estrategia);
+  (B) **escalar capital propio**: crecimiento a largo plazo con DD máximo tolerable (Sharpe/DSR, tamaño fraccional).
+  Hasta hoy todo se evaluó solo con métricas tipo (B) (media R, DSR, 1% riesgo/op, límite diario 2%). Pendiente: reglas
+  exactas de la firma (las da el usuario; no se inventan) -> simulador de challenge por Monte Carlo sobre trades OOS.
 - TRUTH > PROFIT; NO EDGE FOUND es un resultado válido. Sin trading real; EA solo demo.
 - Hipótesis dirigidas: pre-registro antes de mirar datos (spec + SHA-256 en git). Exploración: N acumulado.
 - "Agentes" = workers deterministas registrados en la cola (estado real). LLM opcional y posterior.
