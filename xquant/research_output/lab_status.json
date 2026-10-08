@@ -1,14 +1,35 @@
 {
- "as_of": "2026-10-08T08:56:29+00:00",
- "lab": "OFFLINE (no live worker)",
- "active_agents": 0,
- "agents": [],
- "running_jobs": [],
+ "as_of": "2026-10-08T09:05:05+00:00",
+ "lab": "ONLINE",
+ "active_agents": 1,
+ "agents": [
+  {
+   "id": "W-vm-4516-50301",
+   "department": "any",
+   "status": "RUNNING",
+   "current_job": "JOB-000003",
+   "heartbeat_at": "2026-10-08T09:05:01+00:00",
+   "jobs_done": 0,
+   "jobs_failed": 0
+  }
+ ],
+ "running_jobs": [
+  {
+   "id": "JOB-000003",
+   "kind": "research",
+   "department": "pattern_mining",
+   "params": "{\"asset\": \"NAS100_M30\", \"max_minutes\": 45, \"mode\": \"standard\"}",
+   "started_at": "2026-10-08T09:05:01+00:00",
+   "attempts": 1
+  }
+ ],
  "jobs": {
-  "DONE": 2
+  "DONE": 2,
+  "RUNNING": 1
  },
  "jobs_by_department": {
   "data_mining:DONE": 1,
+  "pattern_mining:RUNNING": 1,
   "research_memory:DONE": 1
  },
  "research_runs": {

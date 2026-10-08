@@ -1,10 +1,10 @@
 {
   "url": "https://raw.githubusercontent.com/datasets/exchange-rates/main/data/daily.csv",
-  "raw_sha256": "944c4937703177bdc5e82ced55b6e50ffcd1f89fef4bbca29785ac7cce8bd6c4",
-  "rows": 7235,
-  "downloaded_at": "2026-10-03T23:03:58+00:00",
+  "raw_sha256": "60178da035ddb8e7bedd365c21ff18544a92854203b6a8010633cba0acbe44ad",
+  "rows": 7240,
+  "downloaded_at": "2026-10-08T08:56:18+00:00",
   "filter": {
     "Country": "Euro"
   },
-  "snapshot_sha256": "4461d00d0c4fde0091213c99616baeb807ee43b31375d6a60d00f513c8df2166"
+  "snapshot_sha256": "cfcfff5eab6cb98a5df64bc36d4c2524c43d47c55ca405af85f5d43e570551af"
 }

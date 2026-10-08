@@ -2,7 +2,7 @@
   "url": "https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv",
   "raw_sha256": "570e05630c9a5e7350d0c3dbe3acc58e793cb5248181ab0e949c121cc082fb83",
   "rows": 9278,
-  "downloaded_at": "2026-10-04T12:21:46+00:00",
+  "downloaded_at": "2026-10-08T08:56:20+00:00",
   "filter": null,
   "snapshot_sha256": "571ca133074d44c47201ca540076a03719fcfc0a4d3dfe01f8651f44c417cf3a"
 }
